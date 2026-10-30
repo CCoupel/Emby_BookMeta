@@ -40,3 +40,7 @@ _work/
 .claude/workflow/
 .claude/worktrees/
 build/
+
+# Etat d'orchestration local
+.claude/workflow-state.json
+.claude/workflow/
