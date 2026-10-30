@@ -36,12 +36,16 @@ namespace BookMeta.Tests.Integration.Sdk.Version
             // libs/ est committé volontairement (CI) : le .gitignore ne doit pas l'exclure.
             var gitignore = Path.Combine(RepoPaths.Root, ".gitignore");
             if (!File.Exists(gitignore)) return;
+
+            // Dernière règle applicable gagne : si *.dll / libs sont ignorés, une réinclusion (!libs/*.dll) doit suivre.
+            var ignore = false;
             foreach (var line in File.ReadAllLines(gitignore))
             {
                 var l = line.Trim();
-                Assert.False(l == "libs/" || l == "libs" || l == "/libs/" || l == "*.dll",
-                    "libs/*.dll ne doit pas être gitignoré : " + l);
+                if (l == "libs/" || l == "libs" || l == "/libs/" || l == "*.dll") ignore = true;
+                else if (l == "!libs/" || l == "!libs/*.dll" || l == "!/libs/*.dll") ignore = false;
             }
+            Assert.False(ignore, "libs/*.dll est gitignoré sans réinclusion (!libs/*.dll)");
         }
     }
 }

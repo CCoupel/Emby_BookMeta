@@ -14,10 +14,11 @@
 
 ### Scenario 1 — Le plugin est charge sans exception
 
-**Validation** : HUMAIN — **Issues** : #4
+**Validation** : AUTO — **Issues** : #4
 
-> Marque HUMAIN conformement au plan (scenarios de recette jouables seulement sur le cluster QUALIF, sans equivalent CI) ;
-> le teamleader peut le requalifier AUTO si `qa` est charge de le jouer via `kubectl`.
+> Joue par `qa` via `kubectl` (commandes + lecture de sortie, sans jugement humain) sur ordre du teamleader.
+> Equivalent automatise : le cluster QUALIF n'est pas disponible en CI ; la partie reproductible en CI (type `Plugin`, Id, version, libs SDK)
+> est couverte par `Integration/Plugin/Smoke/` et `Integration/Sdk/Version/`.
 
 **Objectif** : Verifier que la DLL est installee, que le pod redemarre sain et que le log ne contient aucune exception BookMeta.
 
