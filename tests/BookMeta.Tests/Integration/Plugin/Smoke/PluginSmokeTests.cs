@@ -13,10 +13,9 @@ namespace BookMeta.Tests.Integration.Plugin.Smoke
     [Trait("Lot", "Integration/Plugin/Smoke")]
     public class PluginSmokeTests
     {
-        // TODO(LOT-1, après le DONE de dev-plugin #1) : remplacer par le GUID réel de Plugin.Id
-        // (noté dans docs/SDK_NOTES.md et contracts/models.md §6). Il ne doit JAMAIS changer ensuite :
+        // GUID fixé au squelette (#1), noté dans contracts/models.md §6. Il ne doit JAMAIS changer :
         // il identifie la configuration persistée et la page de configuration.
-        private const string ExpectedPluginId = "00000000-0000-0000-0000-000000000000"; // PLACEHOLDER
+        private const string ExpectedPluginId = "097ed1ba-f0ae-496f-8f56-e54599fe54b1";
 
         // Version du csproj attendue au squelette (ordre teamleader : 0.1.0.0, forme X.Y.Z.a en dev).
         private const string ExpectedVersion = "0.1.0.0";
@@ -58,10 +57,6 @@ namespace BookMeta.Tests.Integration.Plugin.Smoke
         [Fact]
         public void Plugin_Id_est_le_guid_fige_au_squelette()
         {
-            Assert.NotEqual(
-                "00000000-0000-0000-0000-000000000000",
-                ExpectedPluginId);   // échoue tant que le placeholder n'est pas remplacé (cf. TODO)
-
             var id = (Guid)PluginType.GetProperty("Id")!.GetValue(NewUninitializedPlugin())!;
             Assert.Equal(Guid.Parse(ExpectedPluginId), id);
         }
