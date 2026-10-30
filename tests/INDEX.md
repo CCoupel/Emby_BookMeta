@@ -8,3 +8,6 @@
 
 | Chemin | Niveau | Composant | Feature | Statut | Tags |
 |--------|--------|-----------|---------|--------|------|
+| tests/BookMeta.Tests/Integration/Plugin/Smoke/ | integration | plugin | LOT-1 / plugin charge : type Plugin, Id stable, Version | feature | smoke |
+| tests/BookMeta.Tests/Integration/Sdk/Version/ | integration | plugin | LOT-1 / libs SDK Emby en 4.10.2.0 | feature | |
+| tests/procedures/livres/smoke-qualif/ | procedure | plugin | LOT-1 / smoke QUALIF emby2 (plugin charge, visible, sans exception) | feature | smoke |
