@@ -1,26 +1,46 @@
 name: Release
 
+# - push du tag vX.Y.Z : rebuild deterministe depuis le commit fige du tag, puis GitHub Release (BORE (b)).
+# - workflow_dispatch : release a blanc, memes etapes de build/packaging, livrables en artefact du run.
+#   Aucun tag, aucune Release publique.
 on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version X.Y.Z a verifier contre <Version> du csproj (release a blanc, sans tag ni Release)'
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
+      # Le tag fait foi (push) ; en release a blanc, la version saisie joue ce role. Jamais calculee.
+      - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then v="${GITHUB_REF_NAME#v}"; else v="${INPUT_VERSION#v}"; fi
+          if ! [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '$v' invalide (attendu X.Y.Z)"
+            exit 1
+          fi
+          echo "VERSION=$v" >> "$GITHUB_OUTPUT"
 
-      # Le tag fait foi : on verifie le csproj, on ne le modifie jamais
-      - name: Check tag matches csproj version
+      # On verifie le csproj, on ne le modifie jamais
+      - name: Check version matches csproj
         env:
           TAG_VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
@@ -32,7 +52,7 @@ jobs:
           fi
           csproj_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
           if [ "$csproj_version" != "$TAG_VERSION" ]; then
-            echo "::error file=$csproj::Le tag v$TAG_VERSION ne correspond pas a <Version> du csproj ($raw)."
+            echo "::error file=$csproj::La version $TAG_VERSION ne correspond pas a <Version> du csproj ($raw)."
             exit 1
           fi
 
@@ -52,10 +72,37 @@ jobs:
           cp dist/BookMeta.dll "release/BookMeta-$VERSION.dll"
           (cd release && sha256sum "BookMeta-$VERSION.dll" > "BookMeta-$VERSION.dll.sha256")
 
-      # Notes : section "## [X.Y.Z]" du CHANGELOG.md, sinon notes generees par GitHub
+      - name: Upload livrables
+        uses: actions/upload-artifact@v4
+        with:
+          name: BookMeta-${{ steps.version.outputs.VERSION }}
+          path: |
+            release/BookMeta-${{ steps.version.outputs.VERSION }}.dll
+            release/BookMeta-${{ steps.version.outputs.VERSION }}.dll.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  # Uniquement sur tag : la release a blanc s'arrete a l'artefact du job build.
+  release:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download livrables
+        uses: actions/download-artifact@v4
+        with:
+          name: BookMeta-${{ needs.build.outputs.version }}
+          path: release
+
+      # Notes : section "## [X.Y.Z]" du CHANGELOG.md, sinon renvoi aux commits du tag
       - name: Release notes
-        env:
-          VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
           awk -v v="$VERSION" '$0 ~ "^## \\[?"v"\\]?" {f=1; next} f && /^## / {exit} f' CHANGELOG.md > release/notes.md 2>/dev/null || true
           [ -s release/notes.md ] || echo "Voir les commits du tag v$VERSION." > release/notes.md
@@ -63,8 +110,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "BookMeta v${{ steps.version.outputs.VERSION }}"
+          name: "BookMeta v${{ needs.build.outputs.version }}"
           body_path: release/notes.md
           files: |
-            release/BookMeta-${{ steps.version.outputs.VERSION }}.dll
-            release/BookMeta-${{ steps.version.outputs.VERSION }}.dll.sha256
+            release/BookMeta-${{ needs.build.outputs.version }}.dll
+            release/BookMeta-${{ needs.build.outputs.version }}.dll.sha256
