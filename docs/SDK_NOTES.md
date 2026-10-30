@@ -112,5 +112,5 @@ niveau du provider (`Warn` + `HasMetadata = false`). Aucun accès réseau, aucun
 
 ## 7. Références
 
-Contrat de mapping : `contracts/models.md`. Cadrage : `docs/CADRAGE.md`. Docs XML officielles du SDK (non committées) :
-`_work/tmp/sdk410/extra/MediaBrowser.{Common,Controller,Model}.xml`.
+Contrat de mapping : `contracts/models.md`. Cadrage : `docs/CADRAGE.md`. Docs XML officielles du SDK (non committées) : `/system/MediaBrowser.{Common,Controller,Model}.xml` du pod `emby2`
+(`kubectl -n media cp <pod-emby2>:/system/<fichier> …`, `KUBECONFIG=private/kubeconfig.yml`) ; les DLL `libs/` viennent du même dossier.

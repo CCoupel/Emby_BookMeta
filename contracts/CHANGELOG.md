@@ -8,4 +8,4 @@
   champs, relecture, couverture (dossier / epub / cbz), configuration, noms stables des providers.
 - Aucun endpoint HTTP ni message propre au plugin : la page de configuration utilise l'API standard d'Emby
   (`getPluginConfiguration` / `updatePluginConfiguration`).
-- Points **[GATE 2]** (auteur → Tags + tri ; série → Tag + tri) : défauts recommandés, à confirmer par l'utilisateur.
+- Points **[GATE 2]** (auteur → Tags + tri ; série → Tag + tri) : **validés par l'utilisateur au GATE 2** (2026-10-30) — contrat inchangé, les défauts de `models.md` §2 sont définitifs.
