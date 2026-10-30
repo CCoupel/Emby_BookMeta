@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # Le tag fait foi : on verifie le csproj, on ne le modifie jamais
+      - name: Check tag matches csproj version
+        env:
+          TAG_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          csproj=src/BookMeta/BookMeta.csproj
+          raw=$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' "$csproj" | head -n1 | tr -d '\r[:space:]')
+          if ! [[ "$raw" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(\.[0-9]+)?$ ]]; then
+            echo "::error file=$csproj::Version '$raw' illisible (attendu X.Y.Z ou X.Y.Z.a)"
+            exit 1
+          fi
+          csproj_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+          if [ "$csproj_version" != "$TAG_VERSION" ]; then
+            echo "::error file=$csproj::Le tag v$TAG_VERSION ne correspond pas a <Version> du csproj ($raw)."
+            exit 1
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: CI (build, tests, audit)
+        run: bash scripts/ci.sh
+
+      - name: Package
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          mkdir -p release
+          cp dist/BookMeta.dll "release/BookMeta-$VERSION.dll"
+          (cd release && sha256sum "BookMeta-$VERSION.dll" > "BookMeta-$VERSION.dll.sha256")
+
+      # Notes : section "## [X.Y.Z]" du CHANGELOG.md, sinon notes generees par GitHub
+      - name: Release notes
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          awk -v v="$VERSION" '$0 ~ "^## \\[?"v"\\]?" {f=1; next} f && /^## / {exit} f' CHANGELOG.md > release/notes.md 2>/dev/null || true
+          [ -s release/notes.md ] || echo "Voir les commits du tag v$VERSION." > release/notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "BookMeta v${{ steps.version.outputs.VERSION }}"
+          body_path: release/notes.md
+          files: |
+            release/BookMeta-${{ steps.version.outputs.VERSION }}.dll
+            release/BookMeta-${{ steps.version.outputs.VERSION }}.dll.sha256
