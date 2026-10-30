@@ -104,11 +104,11 @@ jobs:
       # Notes : section "## [X.Y.Z]" du CHANGELOG.md, sinon renvoi aux commits du tag
       - name: Release notes
         run: |
-          awk -v v="$VERSION" '$0 ~ "^## \\[?"v"\\]?" {f=1; next} f && /^## / {exit} f' CHANGELOG.md > release/notes.md 2>/dev/null || true
+          awk -v v="$VERSION" 'index($0, "## [" v "]") == 1 || $0 == "## " v || index($0, "## " v " ") == 1 {f=1; next} f && /^## / {exit} f' CHANGELOG.md > release/notes.md 2>/dev/null || true
           [ -s release/notes.md ] || echo "Voir les commits du tag v$VERSION." > release/notes.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           name: "BookMeta v${{ needs.build.outputs.version }}"
           body_path: release/notes.md
