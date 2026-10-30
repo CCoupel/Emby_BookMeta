@@ -77,6 +77,11 @@ quand le livre est rattaché à une série. Les descriptions peuvent contenir de
    log `Warn` et on continue. Aucun fichier écrit dans la bibliothèque (montée en lecture seule).
 4. Page de config minimale (facultative) : activer/désactiver l'extraction de couverture epub.
 
+### Décisions
+
+- **2026-10-30 — `metadata.opf` source de vérité** : le `metadata.opf` est la source de vérité des livres.
+  Aucun export `.nfo` (ni par le plugin, ni via le saver NFO d'Emby) — **hors périmètre**.
+
 ## Tests
 
 - Tests unitaires xunit : parsing OPF (fixture ci-dessus, OPF 3, série, entités HTML, OPF invalide),
