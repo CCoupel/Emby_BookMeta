@@ -17,8 +17,8 @@ namespace BookMeta.Tests.Integration.Plugin.Smoke
         // il identifie la configuration persistée et la page de configuration.
         private const string ExpectedPluginId = "097ed1ba-f0ae-496f-8f56-e54599fe54b1";
 
-        // Version du csproj attendue au squelette (ordre teamleader : 0.1.0.0, forme X.Y.Z.a en dev).
-        private const string ExpectedVersion = "0.1.0.0";
+        // Version du milestone (X.Y.Z) ; le 4e champ « a » est incrémenté par deployer au /publish : non testé.
+        private const string ExpectedMilestone = "0.1.0";
 
         private static Type PluginType => typeof(global::BookMeta.Plugin);
 
@@ -79,10 +79,11 @@ namespace BookMeta.Tests.Integration.Plugin.Smoke
         }
 
         [Fact]
-        public void Version_assembly_est_celle_du_squelette()
+        public void Version_assembly_est_celle_du_milestone()
         {
-            // À mettre à jour à chaque montée de version (forme X.Y.Z.a en dev).
-            Assert.Equal(Version.Parse(ExpectedVersion), PluginType.Assembly.GetName().Version);
+            // À mettre à jour à chaque nouveau milestone (X.Y.Z) ; le 4e champ est ignoré.
+            var v = PluginType.Assembly.GetName().Version!;
+            Assert.Equal(ExpectedMilestone, v.Major + "." + v.Minor + "." + v.Build);
         }
 
         [Fact]
