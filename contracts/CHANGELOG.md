@@ -2,6 +2,11 @@
 
 > Changements de contrats (API, schemas) : `BREAKING` | `CHANGED` | `ADDED`. Lu par le CDP au GATE 2.
 
+## [20261031-b] — v0.1.0 : défauts de recette emby2 (cycle 3)
+
+- **[CHANGED]** `contracts/models.md` §2/§4/§7 : `SortName` verrouillé sur l'item réel (effacé sinon par `AfterMetadataRefresh`) ;
+  `BookEmbeddedCoverProvider.Supports` vrai pour un livre sans chemin ; activation manuelle de « BookMeta Embedded Cover » documentée. Aucun BREAKING.
+
 ## [20261031] — v0.1.0 : écarts décidés à la revue LOT-2
 
 - **[CHANGED]** `contracts/models.md` §1 : le dossier du livre est dérivé de `item.Path` (et non de `ContainingFolderPath`).

@@ -17,6 +17,9 @@ public class BookMetadataProvider : ILocalMetadataProvider<Book>, IHasItemChange
         _logger = logManager.GetLogger("BookMeta");
     }
 
+    /// <summary>Retrouve l'item réel par son identifiant interne (surchargeable en test : <c>ILibraryManager</c> n'est pas simulable hors serveur).</summary>
+    internal Func<long, BaseItem?> ItemLookup { get; set; } = id => BaseItem.LibraryManager?.GetItemById(id);
+
     /// <summary>Clé affichée (et stockée) dans les réglages de bibliothèque : ne jamais changer.</summary>
     public string Name => "BookMeta";
 
@@ -32,6 +35,7 @@ public class BookMetadataProvider : ILocalMetadataProvider<Book>, IHasItemChange
             if (book != null)
             {
                 result.Item = book;
+                ApplySortNameToItem(info, book);
                 result.HasMetadata = true;
                 result.ResultLanguage = source!.Document.Language;
                 result.Provider = BookMapper.ProviderName;
@@ -47,6 +51,23 @@ public class BookMetadataProvider : ILocalMetadataProvider<Book>, IHasItemChange
             result = new MetadataResult<Book>();
         }
         return Task.FromResult(result);
+    }
+
+    /// <summary>
+    /// Le tri fusionné depuis le résultat est effacé par <c>AfterMetadataRefresh</c> : on le pose et on verrouille le champ sur l'item réel
+    /// (retrouvé par <c>BaseItem.LibraryManager</c>, statique posé par Emby ; absent hors serveur → sans effet).
+    /// </summary>
+    private void ApplySortNameToItem(ItemInfo info, Book book)
+    {
+        try
+        {
+            if (info.Id == 0 || string.IsNullOrWhiteSpace(book.SortName)) return;
+            if (ItemLookup(info.Id) is Book real) SortNameLock.Apply(real, book.SortName);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn("BookMeta : tri non verrouillé pour {0} ({1})", info.Path ?? "?", ex.Message);
+        }
     }
 
     /// <summary>Vrai si <c>metadata.opf</c> (sinon le fichier du livre) est plus récent que la dernière actualisation.</summary>

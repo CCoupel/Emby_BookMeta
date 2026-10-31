@@ -23,4 +23,31 @@ public class EmbeddedCoverProviderTests
         Assert.True(string.IsNullOrEmpty(r.Path));
         Assert.False(log.HasWarning);
     }
+
+    [Fact]
+    public void LivreFactice_SansChemin_EstSupporte_PourQueLeProviderSoitPropose()
+    {
+        // Emby liste les récupérateurs d'images d'une bibliothèque avec un livre sans Path (défaut D2 de la recette emby2).
+        var provider = new BookEmbeddedCoverProvider(new RecordingLogger().Manager, RealFs.FileSystem());
+        Assert.True(provider.Supports(new Book()));
+        Assert.False(provider.Supports(new MediaBrowser.Controller.Entities.Audio.Audio()));
+    }
+
+    [Theory]
+    [InlineData("/x/a.cbz", true)]
+    [InlineData("/x/a.epub", true)]
+    [InlineData("/x/a.pdf", false)]
+    public void AvecChemin_LExtensionDecide(string path, bool expected)
+    {
+        var provider = new BookEmbeddedCoverProvider(new RecordingLogger().Manager, RealFs.FileSystem());
+        Assert.Equal(expected, provider.Supports(new Book { Path = path }));
+    }
+
+    [Fact]
+    public void OptionEpubDesactivee_ExclutLesEpubSeulement()
+    {
+        var provider = new BookEmbeddedCoverProvider(new RecordingLogger().Manager, RealFs.FileSystem()) { EpubExtractionEnabled = () => false };
+        Assert.False(provider.Supports(new Book { Path = "/x/a.epub" }));
+        Assert.True(provider.Supports(new Book { Path = "/x/a.cbz" }));
+    }
 }

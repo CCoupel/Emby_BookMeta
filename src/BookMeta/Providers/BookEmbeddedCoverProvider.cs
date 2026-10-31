@@ -25,7 +25,10 @@ public class BookEmbeddedCoverProvider : IDynamicImageProvider
 
     public bool Supports(BaseItem item)
     {
-        if (item is not Book || string.IsNullOrEmpty(item.Path)) return false;
+        if (item is not Book) return false;
+        // Emby construit la liste des « récupérateurs d'images » d'une bibliothèque avec un livre factice SANS chemin :
+        // refuser ici ferait disparaître le provider des réglages. Le contrôle fin se fait dès qu'un chemin existe, puis dans GetImage.
+        if (string.IsNullOrEmpty(item.Path)) return true;
         var ext = Path.GetExtension(item.Path);
         if (ext.Equals(".cbz", StringComparison.OrdinalIgnoreCase)) return true;
         return ext.Equals(".epub", StringComparison.OrdinalIgnoreCase) && EpubExtractionEnabled();

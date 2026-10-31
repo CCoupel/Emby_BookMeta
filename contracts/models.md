@@ -94,4 +94,5 @@ Précisions apportées à l'implémentation, jugées justifiées par la revue ; 
 | « Pas d'image » | Réponse `DynamicImageResponse` **vide** (ni `Stream` ni `Path`), jamais `null` — *à confirmer en recette emby2* |
 | Description | Plafonnée à 64 Ko avant nettoyage ; nettoyage borné par un délai (1 s), repli linéaire + `Warn` |
 | Tailles | OPF et `container.xml` ≤ 5 Mo ; image de couverture ≤ 32 Mo |
-
+| Tri persistant | Le `SortName` calculé est posé sur l'item réel **et le champ `SortName` est verrouillé** (Emby le réinitialise sinon à chaque actualisation) ; un tri saisi à la main est réécrit au refresh suivant |
+| Récupérateur d'images embarqué | `Supports` vrai pour un livre sans chemin (liste des réglages) ; l'utilisateur doit cocher « BookMeta Embedded Cover » dans la bibliothèque |

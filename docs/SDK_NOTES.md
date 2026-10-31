@@ -58,7 +58,7 @@ Autres types : `[Model] MediaBrowser.Model.Drawing.ImageFormat { Bmp, Gif, Jpg, 
 | Point | Résultat | Statut |
 |-------|----------|--------|
 | Signature de `IDynamicImageProvider.GetImage` | Confirmée par réflexion : `BaseMetadataResult` en 1er paramètre. `ItemImageProvider.RefreshFromProvider` appelle `IDynamicImageProvider.GetSupportedImages` puis `GetImage` (ou la variante `…WithLibraryOptions` si implémentée) | **Tranché** |
-| « Pas d'image » côté `DynamicImageResponse` | L'IL de `ItemImageProvider` lit `DynamicImageResponse.Path`, `Stream`, `Format`, `Protocol`, `GeneratedFromItemIds` ; erreur de provider journalisée « Error in {0} dynamic image provider ». Retourner `null` ou une réponse sans `Stream` ni `Path` est le cas attendu | **À vérifier en LOT-2 sur emby2** (retourner une réponse vide, constater l'absence d'exception) |
+| « Pas d'image » côté `DynamicImageResponse` | Tranché par l'IL de `ItemImageProvider.RefreshFromProvider` : après `GetImage`, Emby lit `response.Path` (non vide → `SetImage`), sinon `response.Stream` (non nul → `SaveImage` avec `image/<Format>`). **Une réponse vide (ni `Path` ni `Stream`) ne déclenche aucune branche** ; une réponse `null` lève une `NullReferenceException` attrapée par « Error in {0} dynamic image provider » et marque le refresh en erreur → BookMeta renvoie toujours une réponse vide | **Tranché** (IL) ; confirmation visuelle en recette emby2 |
 | Comportement d'Emby si `HasMetadata = false` | Non lu dans l'IL | **À vérifier en LOT-2 sur emby2** |
 | `ItemInfo.ContainingFolderPath` en dossier mixte | Non lu dans l'IL ; BookMeta ne s'en sert pas : `OpfLocator` dérive le dossier de `ItemInfo.Path` | **À vérifier en LOT-2 sur emby2** |
 
@@ -114,3 +114,22 @@ niveau du provider (`Warn` + `HasMetadata = false`). Aucun accès réseau, aucun
 
 Contrat de mapping : `contracts/models.md`. Cadrage : `docs/CADRAGE.md`. Docs XML officielles du SDK (non committées) : `/system/MediaBrowser.{Common,Controller,Model}.xml` du pod `emby2`
 (`kubectl -n media cp <pod-emby2>:/system/<fichier> …`, `KUBECONFIG=private/kubeconfig.yml`) ; les DLL `libs/` viennent du même dossier.
+
+## 8. Défauts de recette emby2 (cycle 3) — mécanismes établis dans l'IL 4.10.2
+
+### D1 — le `SortName` d'un lecteur local est effacé après chaque actualisation
+- `ProviderUtils.MergeBaseItemData` copie bien `SortName` du résultat vers l'item (si `replaceData` ou tri vide, champ non verrouillé).
+- Mais `BaseItem.AfterMetadataRefresh` appelle `ResetSortName()` : `if (!IsFieldLocked(MetadataFields.SortName)) _sortName = null;`
+  → le getter recalcule alors le tri depuis `Name` (`CreateSortName` : retire les articles « La/Le… » via `ILocalizationManager.TrimSortRemoveWords`, d'où `La psy` → `psy`).
+  Constaté en recette : 17/17 livres avec le tri par défaut d'Emby.
+- `MetadataService.MergeData` ne copie pas `LockedFields` du résultat ; `CopyMetadataSettings` les copie de l'item réel vers l'item temporaire.
+- **Correctif** : `SortNameLock.Apply(item, sortName)` ajoute `MetadataFields.SortName` à `LockedFields` de l'**item réel** (retrouvé par `BaseItem.LibraryManager.GetItemById(info.Id)`) et lui pose `SortName`. `ResetSortName` ne l'efface alors plus.
+- **Limites assumées** : (1) un tri saisi à la main dans l'UI (qui verrouille aussi `SortName`) est réécrit à l'actualisation suivante ; (2) le verrou reste posé si BookMeta est désinstallé ; (3) si `ItemInfo.Id` ne désigne pas l'item réel pendant le refresh, le correctif est sans effet (rien n'est cassé, aucun Warn). **À re-vérifier sur emby2** : `SortName` / `ForcedSortName` après `FullRefresh`.
+
+### D2 — « BookMeta Embedded Cover » n'apparaît pas dans les récupérateurs d'images
+- La liste des récupérateurs d'une bibliothèque (`Libraries/AvailableOptions`) est construite avec un livre factice **sans `Path`** ; un `Supports(item)` qui exige un chemin masque le provider (constaté : `ImageFetchers = []`).
+  → `Supports` renvoie `true` pour tout `Book` sans chemin ; avec chemin : `.cbz`, ou `.epub` si l'option est active ; le reste est contrôlé dans `GetImage` (réponse vide).
+- **Activation** : `BaseItem.IsImageFetcherEnabled` exige que le nom soit dans `TypeOptions.ImageFetchers` de la bibliothèque ; `ProviderManager.IsImageFetcherEnabledByDefault` est une **liste figée de noms Emby** (« Embedded Images », « Screen Grabber »…) qui ne contient pas BookMeta.
+  → après installation, l'utilisateur doit **cocher « BookMeta Embedded Cover »** dans Réglages de la bibliothèque → Récupérateurs d'images (à documenter au README et à la recette), ou l'ajouter via l'API (`LibraryOptions.TypeOptions[Book].ImageFetchers`).
+- `BookMeta Cover File` est un `ILocalImageFileProvider` (images locales) : il n'apparaît pas dans cette liste et n'a pas besoin d'être activé.
+
