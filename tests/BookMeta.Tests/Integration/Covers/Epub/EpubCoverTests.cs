@@ -179,6 +179,21 @@ namespace BookMeta.Tests.Integration.Covers.Epub
         }
 
         [SpecFact]
+        public void Le_chemin_est_pris_sur_BaseItem_quand_MetadataResult_Item_n_en_a_pas()
+        {
+            // Revue LOT-2 M2 : Emby peut passer un résultat dont Item (nouveau Book) n'a pas de Path ; l'item résolu (BaseItem) en a un.
+            var epub = EpubPath();
+            var cover = Img.Jpg("via-baseitem");
+            Archives.WriteEpub(epub, Archives.Opf2("T", "c", ("c", "c.jpg", "image/jpeg")),
+                files: new[] { ("OEBPS/c.jpg", cover) });
+
+            var r = SpecApi.GetEmbeddedCoverFromBaseItemOnly(epub, _log);
+
+            Assert.True(SpecApi.HasImage(r));
+            Assert.Equal(cover, SpecApi.ReadImage(r!));
+        }
+
+        [SpecFact]
         public void Seule_l_image_Primary_est_annoncee()
         {
             var epub = EpubPath();

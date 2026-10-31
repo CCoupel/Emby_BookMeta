@@ -210,6 +210,52 @@ namespace BookMeta.Tests.Integration.Mapping.Book
             Assert.Null(r.Item.ProductionYear);
         }
 
+        [SpecTheory]
+        [InlineData("<dc:date opf:event=\"creation\">2000-01-01</dc:date><dc:date opf:event=\"modification\">2023-05-05</dc:date><dc:date opf:event=\"publication\">2006-03-04</dc:date>")]
+        [InlineData("<dc:date opf:event=\"modification\">2023-05-05</dc:date><dc:date opf:event=\"publication\">2006-03-04</dc:date>")]
+        [InlineData("<dc:date opf:event=\"modification\">2023-05-05</dc:date><dc:date>2006-03-04</dc:date><dc:date opf:event=\"creation\">2000-01-01</dc:date>")]
+        public void Plusieurs_dates_OPF2_la_publication_est_retenue(string datesXml)
+        {
+            // Revue LOT-2 : opf:event creation / modification ne doivent pas fausser l'année ni PremiereDate.
+            var r = MapXml(Opf2("<dc:title>T</dc:title>" + datesXml));
+
+            Assert.Equal(2006, r.Item.ProductionYear);
+            Assert.Equal(new DateTime(2006, 3, 4), r.Item.PremiereDate!.Value.UtcDateTime.Date);
+        }
+
+        [SpecFact]
+        public void Date_avec_offset_conserve_l_annee_d_origine()
+        {
+            // Revue LOT-2 : 2020-12-31T23:30:00-05:00 vaut 2021-01-01Z en UTC mais l'année de l'OPF est 2020.
+            var r = MapXml(Opf2("<dc:title>T</dc:title><dc:date>2020-12-31T23:30:00-05:00</dc:date>"));
+
+            Assert.Equal(2020, r.Item.ProductionYear);
+        }
+
+        [SpecTheory]
+        [InlineData("-3")]
+        [InlineData("1e300")]
+        [InlineData("99999999999")]
+        [InlineData("0.001")]
+        [InlineData("-0.5")]
+        public void Index_de_serie_negatif_ou_demesure_est_ignore_dans_le_tri(string index)
+        {
+            // Revue LOT-2 : pas de « -3 » ni d'int.MinValue dans le SortName ; le tag de série et le reste du tri restent.
+            var r = MapXml(Opf2("<dc:title>Titre</dc:title><meta name=\"calibre:title_sort\" content=\"Titre\"/>" +
+                "<dc:creator opf:role=\"aut\" opf:file-as=\"Auteur, Un\">Un Auteur</dc:creator>" +
+                "<meta name=\"calibre:series\" content=\"Saga\"/><meta name=\"calibre:series_index\" content=\"" + index + "\"/>"));
+
+            Assert.Contains("Série : Saga", r.Item.Tags);
+            Assert.StartsWith("Auteur, Un", r.Item.SortName);
+            Assert.EndsWith("Titre", r.Item.SortName);
+            Assert.DoesNotContain("-3", r.Item.SortName);
+            Assert.DoesNotContain("-2147483648", r.Item.SortName);
+            Assert.DoesNotContain("2147483647", r.Item.SortName);
+            Assert.DoesNotContain("E+", r.Item.SortName);
+            Assert.DoesNotContain("99999999999", r.Item.SortName);
+            Assert.DoesNotContain("  ", r.Item.SortName);
+        }
+
         // ---------- Éditeur, sujets ----------
 
         [SpecFact]

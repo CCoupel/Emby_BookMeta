@@ -11,6 +11,19 @@ namespace BookMeta.Tests.Support
     /// Les noms de types/constructeurs ci-dessous sont ceux de l'architecture figée (docs/SDK_NOTES.md §architecture) :
     /// à confronter au handoff dev-plugin ; en cas d'écart, corriger ICI uniquement.
     /// </summary>
+    /// <summary>
+    /// BaseMetadataResult qui n'est PAS un MetadataResult&lt;Book&gt; (ce dernier est scellé et son BaseItem == Item) :
+    /// seul BaseItem porte l'item résolu par Emby, avec son Path.
+    /// </summary>
+    internal sealed class ResolvedItemResult : BaseMetadataResult
+    {
+        private readonly BaseItem _resolved;
+
+        public ResolvedItemResult(BaseItem resolved) => _resolved = resolved;
+
+        public override BaseItem BaseItem => _resolved;
+    }
+
     public static class SpecApi
     {
 #if LOT2_IMPL
@@ -65,6 +78,14 @@ namespace BookMeta.Tests.Support
             return provider.GetImage(result, ImageType.Primary, CancellationToken.None).GetAwaiter().GetResult();
         }
 
+        /// <summary>Résultat non générique dont seul BaseItem (item résolu, avec Path) est renseigné (revue LOT-2 M2).</summary>
+        public static DynamicImageResponse? GetEmbeddedCoverFromBaseItemOnly(string bookPath, RecordingLogger log)
+        {
+            var provider = new global::BookMeta.Providers.BookEmbeddedCoverProvider(log.Manager, RealFs.FileSystem());
+            var result = new ResolvedItemResult(NewBook(bookPath));
+            return provider.GetImage(result, ImageType.Primary, CancellationToken.None).GetAwaiter().GetResult();
+        }
+
         public static bool SupportsEmbeddedCover(BaseItem item, RecordingLogger log) =>
             new global::BookMeta.Providers.BookEmbeddedCoverProvider(log.Manager, RealFs.FileSystem()).Supports(item);
 
@@ -86,6 +107,7 @@ namespace BookMeta.Tests.Support
         public static bool SupportsFolderCovers(BaseItem item, RecordingLogger log) => throw NotWired();
         public static string FolderCoverProviderName(RecordingLogger log) => throw NotWired();
         public static DynamicImageResponse? GetEmbeddedCover(string bookPath, RecordingLogger log) => throw NotWired();
+        public static DynamicImageResponse? GetEmbeddedCoverFromBaseItemOnly(string bookPath, RecordingLogger log) => throw NotWired();
         public static bool SupportsEmbeddedCover(BaseItem item, RecordingLogger log) => throw NotWired();
         public static string EmbeddedCoverProviderName(RecordingLogger log) => throw NotWired();
         public static ImageType[] EmbeddedSupportedImages(string bookPath, RecordingLogger log) => throw NotWired();

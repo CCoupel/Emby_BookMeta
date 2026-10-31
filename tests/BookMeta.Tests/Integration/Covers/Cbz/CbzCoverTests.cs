@@ -124,6 +124,20 @@ namespace BookMeta.Tests.Integration.Covers.Cbz
         }
 
         [SpecFact]
+        public void Cbz_le_chemin_est_pris_sur_BaseItem_quand_MetadataResult_Item_n_en_a_pas()
+        {
+            // Revue LOT-2 M2 (voir EpubCoverTests).
+            var cbz = CbzPath();
+            var first = Img.Jpg("via-baseitem");
+            Archives.WriteZip(cbz, ("001.jpg", first), ("002.jpg", Img.Jpg("p2")));
+
+            var r = SpecApi.GetEmbeddedCoverFromBaseItemOnly(cbz, _log);
+
+            Assert.True(SpecApi.HasImage(r));
+            Assert.Equal(first, SpecApi.ReadImage(r!));
+        }
+
+        [SpecFact]
         public void Supports_cbz_oui_cbr_pdf_non()
         {
             Assert.True(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = "/ceph/books/D/F (2026)/F.cbz" }, _log));
