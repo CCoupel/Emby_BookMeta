@@ -49,7 +49,7 @@ public static class BookLibraryActivator
                     var typeOptions = FindOrCreateBookOptions(work, store, out var created);
                     if (typeOptions == null)
                     {
-                        logger.Info("BookMeta : bibliothèque {0} sans réglages « Livres » et réglages par défaut d'Emby indisponibles : activer « {1} » à la main (Réglages de la bibliothèque → Récupérateurs d'images)", library.Name, fetcherName);
+                        logger.Info("BookMeta : bibliothèque {0} sans réglages « Livres » et réglages par défaut d'Emby indisponibles : activer « {1} » à la main (Médiathèque → réglages de la bibliothèque de livres → section « Book chercheurs d'image »)", library.Name, fetcherName);
                         continue;
                     }
                     var changed = created;
