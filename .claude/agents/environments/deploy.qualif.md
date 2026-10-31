@@ -32,7 +32,7 @@ ACTUAL_SIZE=$(MSYS_NO_PATHCONV=1 kubectl exec -n media "$NEW_POD" -- stat -c %s 
 [ "$ACTUAL_SIZE" = "$EXPECTED_SIZE" ] || ROLLOUT_STATUS=1
 ```
 
-**Smoke test** : taille identique, pod `Running`, et dans `/config/logs/embyserver.txt` le chargement du plugin
+**Smoke test** : taille identique, pod `Running`, et dans le log le plus recent `/config/logs/embyserver-<n>.txt` (`ls -t /config/logs/embyserver*.txt | head -1`), le chargement du plugin
 (`grep -i bookmeta`) sans exception. La recette (titre, auteur, resume, annee, couverture des livres de reference
 apres « Actualiser les metadonnees » de la bibliotheque Livres) est faite au GATE QUALIF.
 Prerequis unique : bibliotheque « Livres » (`/ceph/books`) creee dans l'UI d'`emby2`.

@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.6.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4" />
+  </ItemGroup>
+
+  <!-- LOT-2 : SpecApi.cs branche les tests d'integration sur le code de production (Lot2Specs=true par defaut,
+       providers livres). -p:Lot2Specs=false les ignore (Skip) : utile si une API de production est en chantier. -->
+  <PropertyGroup>
+    <Lot2Specs Condition="'$(Lot2Specs)' == ''">true</Lot2Specs>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Lot2Specs)' == 'true'">
+    <DefineConstants>$(DefineConstants);LOT2_IMPL</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BookMeta\BookMeta.csproj" />
+  </ItemGroup>
+
+  <!-- SDK Emby : necessaire pour instancier/inspecter Plugin (libs/ committe) -->
+  <ItemGroup>
+    <Reference Include="MediaBrowser.Common">
+      <HintPath>..\..\libs\MediaBrowser.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="MediaBrowser.Controller">
+      <HintPath>..\..\libs\MediaBrowser.Controller.dll</HintPath>
+    </Reference>
+    <Reference Include="MediaBrowser.Model">
+      <HintPath>..\..\libs\MediaBrowser.Model.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

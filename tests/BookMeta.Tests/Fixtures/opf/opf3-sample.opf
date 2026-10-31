@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="3.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">urn:uuid:11111111-2222-3333-4444-555555555555</dc:identifier>
+    <dc:identifier>urn:isbn:978-2-07-036822-8</dc:identifier>
+    <dc:title id="t1">Le Nom du Vent</dc:title>
+    <meta refines="#t1" property="file-as">Nom du Vent, Le</meta>
+    <dc:creator id="c1">Patrick Rothfuss</dc:creator>
+    <meta refines="#c1" property="role" scheme="marc:relators">aut</meta>
+    <meta refines="#c1" property="file-as">Rothfuss, Patrick</meta>
+    <dc:creator id="c2">Jane Doe</dc:creator>
+    <meta refines="#c2" property="role" scheme="marc:relators">ill</meta>
+    <dc:language>fr</dc:language>
+    <dc:date>2019-05</dc:date>
+    <dc:publisher>Gallimard</dc:publisher>
+    <dc:subject>Fantasy</dc:subject>
+    <dc:subject>fantasy</dc:subject>
+    <dc:subject>Aventure</dc:subject>
+    <meta property="belongs-to-collection" id="s1">Chronique du tueur de roi</meta>
+    <meta refines="#s1" property="collection-type">series</meta>
+    <meta refines="#s1" property="group-position">2</meta>
+    <meta property="dcterms:modified">2020-01-01T00:00:00Z</meta>
+  </metadata>
+</package>
