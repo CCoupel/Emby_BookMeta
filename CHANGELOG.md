@@ -20,3 +20,14 @@
 - Lecture XML sécurisée et bornée : OPF et `container.xml` limités à 5 Mo, image de couverture à 32 Mo.
 - Résumé plafonné à 64 Ko, nettoyage HTML borné dans le temps (repli linéaire en cas de dépassement).
 - Année « inconnue » (< 1000) et dates ambiguës ignorées ; index de série hors de 0 à 9999 ignoré pour le tri.
+
+### Ajouté (LOT-3)
+- Page de configuration **BookMeta** : option « Extraire la couverture depuis le fichier epub » (activée par défaut), persistée (#8).
+- `README.md` complet : prérequis, installation, activation, ce que fait le plugin, configuration et limites connues (#5).
+
+### Corrigé (recette LOT-2)
+- Tri persistant : le `SortName` calculé depuis l'OPF est posé sur l'instance rafraîchie et verrouillé, il survit
+  désormais aux actualisations. Un tri saisi à la main est réécrit au rafraîchissement suivant (modifier `metadata.opf`).
+- Récupérateur de couvertures « BookMeta Embedded Cover » visible dans les réglages des bibliothèques de livres,
+  et activé automatiquement une seule fois par bibliothèque (une case décochée ensuite n'est pas recochée).
+
