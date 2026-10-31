@@ -14,11 +14,10 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4" />
   </ItemGroup>
 
-  <!-- LOT-2 : SpecApi.cs ne branche les tests d'integration sur le code de production que si Lot2Specs=true
-       (dotnet test -p:Lot2Specs=true). Sinon, les tests de specification LOT-2 sont ignores (Skip) et la CI reste verte.
-       Basculer le defaut a true quand Providers/ et Covers/ sont livres. -->
+  <!-- LOT-2 : SpecApi.cs branche les tests d'integration sur le code de production (Lot2Specs=true par defaut,
+       providers livres). -p:Lot2Specs=false les ignore (Skip) : utile si une API de production est en chantier. -->
   <PropertyGroup>
-    <Lot2Specs Condition="'$(Lot2Specs)' == ''">false</Lot2Specs>
+    <Lot2Specs Condition="'$(Lot2Specs)' == ''">true</Lot2Specs>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Lot2Specs)' == 'true'">
     <DefineConstants>$(DefineConstants);LOT2_IMPL</DefineConstants>
