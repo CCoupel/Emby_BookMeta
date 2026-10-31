@@ -9,7 +9,11 @@
 - [ ] Environnement : QUALIF (`deployment/emby2`, namespace `media`), `/ceph/books` monte en lecture seule
 - [ ] Plugin BookMeta deploye (LOT-1 valide) ; bibliotheque « Livres » (type Livres, dossier `/ceph/books`) creee
 - [ ] Dans les options de la bibliotheque : « Lecteurs de metadonnees locaux » = `BookMeta` coche ;
-      « Recuperateurs d'images » = `BookMeta Cover File` et `BookMeta Embedded Cover` coches
+      « Recuperateurs d'images » = `BookMeta Cover File` coche
+- [ ] **Action manuelle obligatoire** : cocher `BookMeta Embedded Cover` dans « Recuperateurs d'images » de la bibliotheque « Livres »
+      (UI Reglages de la bibliotheque, ou `LibraryOptions.TypeOptions[Book].ImageFetchers` via l'API). Emby n'active pas un nouveau fetcher de lui-meme
+      (liste « par defaut » figee). Verifier ensuite que `GET Libraries/AvailableOptions?LibraryContentType=books` liste `BookMeta Embedded Cover`
+      dans `TypeOptions[Book].ImageFetchers`, puis lancer **FullRefresh + ReplaceAllImages** (sinon aucune couverture embarquee).
 - [ ] Cle API Emby d'`emby2` fournie par l'utilisateur au moment de la recette — jamais ecrite dans le depot ni dans ce fichier
 - [ ] Action « Actualiser les metadonnees » → « Remplacer toutes les metadonnees » + « Remplacer les images existantes » lancee sur la bibliotheque,
       scan termine (sinon Emby sert son cache : risque du plan)
@@ -31,7 +35,8 @@ Darko Macan — Frankenwood (.pdf + .cbz) ; Stephenie Meyer — « Nuits D'enfer
 |-------|--------|-----------------|----------------|------|
 | 1 | Lire chaque `metadata.opf` (kubectl) et l'item Emby correspondant (API) | 5 items `Book` trouves | | |
 | 2 | Comparer `Name` a `dc:title` | Egaux (entites decodees) | | |
-| 3 | Comparer `SortName` | `"<file-as auteur> - <title_sort>"`, ex. Tentation = `Meyer, Stephenie - Tentation` (accents retires par Emby) | | |
+| 3 | Comparer `SortName` (et `ForcedSortName` si expose) | `"<file-as auteur> - <title_sort>"`, ex. Tentation = `Meyer, Stephenie - Tentation` (accents retires par Emby) ; jamais le titre seul calcule par Emby (« psy » pour « La psy ») | | |
+| 3b | Lire `LockedFields` de chaque item (API, `Fields=LockedFields`) | Contient `SortName` (verrou pose par BookMeta ; sans lui Emby remet le tri a « calcule depuis le nom » apres l'actualisation) ; une seule occurrence | | |
 | 4 | Comparer `Tags` | Contient `Stephenie Meyer` ; aucun tag `Serie :` si l'OPF n'a pas de `calibre:series` | | |
 | 5 | Comparer `Overview` a `dc:description` | Meme texte, en francais, sans balises ni entites (`&#39;`, `&amp;`) | | |
 | 6 | Comparer `ProductionYear` / `PremiereDate` a `dc:date` | Egaux | | |
