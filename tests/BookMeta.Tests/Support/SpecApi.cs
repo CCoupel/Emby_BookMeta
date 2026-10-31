@@ -16,8 +16,14 @@ namespace BookMeta.Tests.Support
 #if LOT2_IMPL
         public static bool Implemented => true;
 
-        private static BookEntity NewBook(string bookPath) =>
-            new BookEntity { Path = bookPath, Name = System.IO.Path.GetFileNameWithoutExtension(bookPath), FileSystem = RealFs.FileSystem() };
+        private static BookEntity NewBook(string bookPath)
+        {
+            // BaseItem.ContainingFolderPath / SortName lisent des états statiques posés par Emby au démarrage.
+            BaseItem.FileSystem = RealFs.FileSystem();
+            BaseItem.LocalizationManager = StubProxy.Create<MediaBrowser.Model.Globalization.ILocalizationManager>(
+                (m, a) => m.Name == "RemoveDiacritics" ? a[0] : null);
+            return new BookEntity { Path = bookPath, Name = System.IO.Path.GetFileNameWithoutExtension(bookPath) };
+        }
 
         public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log)
         {
