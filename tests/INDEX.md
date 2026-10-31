@@ -20,3 +20,5 @@
 | tests/BookMeta.Tests/Integration/Covers/Cbz/ | integration | covers | LOT-2 / premiere image du cbz (tri naturel) | feature | |
 | tests/procedures/livres/recette-livres/ | procedure | providers | LOT-2 / recette emby2 sur les livres de reference | feature | |
 | tests/BookMeta.Tests/Integration/Mapping/Tri/ | integration | providers | LOT-2 / régression D1 : tri verrouillé sur l'item réel (SortName ∈ LockedFields) | regression | |
+| tests/BookMeta.Tests/Integration/Configuration/Toggle/ | integration | configuration | LOT-3 / option EnableEpubCoverExtraction : défaut, persistance XML, AutoEnabledLibraryIds, effet sur les récupérateurs | feature | |
+| tests/procedures/livres/config-page/ | procedure | configuration | LOT-3 / page de configuration BookMeta (case epub, persistance après redémarrage) | feature | |
