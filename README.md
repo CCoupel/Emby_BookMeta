@@ -5,7 +5,7 @@ le `metadata.opf` du dossier du livre (écrit par Bindery depuis la BnF), à dé
 et les couvertures du dossier, de l'epub ou du `.cbz`.
 
 **Aucun appel réseau** : le plugin ne consulte aucun service externe. Il ne modifie jamais les fichiers de la
-bibliothèque (montée en lecture seule) et n'écrit aucun `.nfo`.
+bibliothèque et n'écrit aucun `.nfo`.
 
 > Version en développement (v0.1.0). Le plugin n'est pas encore publié dans une release.
 
@@ -13,8 +13,8 @@ bibliothèque (montée en lecture seule) et n'écrit aucun `.nfo`.
 
 ## Prérequis
 
-- Emby Server **4.10.2** (testé sur le conteneur `emby/embyserver`).
-- Une bibliothèque de type **Livres** (*Books*) dont le dossier contient les livres, organisés ainsi :
+- Emby Server **4.10.2** (testé uniquement sur cette version, image Docker officielle `emby/embyserver`).
+- Une bibliothèque de type **Livres** dont le dossier contient les livres, organisés ainsi :
 
   ```
   /ceph/books/<Auteur>/<Titre> (<Année>)/
@@ -23,45 +23,77 @@ bibliothèque (montée en lecture seule) et n'écrit aucun `.nfo`.
       <Titre>.epub      ← ou .cbz
   ```
 
+Un fichier = un item : un livre fourni en deux formats (ex. `.pdf` + `.cbz`) apparaît en deux items.
+
 ---
 
 ## Installation
 
-1. Récupérer `BookMeta.dll` (asset de la release GitHub `vX.Y.Z`, ou build local : `bash scripts/ci.sh`
-   produit `dist/BookMeta.dll`).
-2. Copier la DLL dans le dossier des plugins d'Emby, `/config/plugins/` (sur le conteneur Emby :
-   `/config/plugins/BookMeta.dll`).
+1. Télécharger l'asset `BookMeta-X.Y.Z.dll` et son `BookMeta-X.Y.Z.dll.sha256` depuis la release GitHub
+   `vX.Y.Z` (ou, en local, `bash scripts/ci.sh` produit `dist/BookMeta.dll`).
+2. Vérifier l'intégrité **avant** de renommer le fichier :
 
    ```bash
-   kubectl cp BookMeta.dll <namespace>/<pod>:/config/plugins/BookMeta.dll
+   sha256sum -c BookMeta-X.Y.Z.dll.sha256
    ```
 
-3. Redémarrer Emby (`kubectl rollout restart` ou redémarrage du conteneur).
-4. Vérifier dans **Tableau de bord → Plugins** que **BookMeta** apparaît, sans erreur.
+3. Copier la DLL **sous le nom `BookMeta.dll`** dans le dossier `plugins` du répertoire de données d'Emby :
+   - image Docker officielle : `/config/plugins/` ;
+   - hors conteneur : `<dossier de données Emby>/plugins/`.
+
+   Exemples (à adapter, ce ne sont pas les seules méthodes) :
+
+   ```bash
+   docker cp BookMeta-X.Y.Z.dll <conteneur>:/config/plugins/BookMeta.dll
+   kubectl cp BookMeta-X.Y.Z.dll <namespace>/<pod>:/config/plugins/BookMeta.dll
+   ```
+
+4. Redémarrer Emby (`docker restart <conteneur>` ou `kubectl rollout restart`).
+5. Vérifier dans **Tableau de bord → Plugins** que **BookMeta** apparaît, sans erreur.
+
+### Mise à jour
+
+Remplacer `BookMeta.dll` par la nouvelle DLL (même procédure, même nom de fichier), puis redémarrer Emby.
+Recharger ensuite la page de configuration sans cache (Ctrl+Maj+R) : le navigateur peut afficher l'ancienne.
+
+### Désinstallation
+
+1. Supprimer `plugins/BookMeta.dll`, puis redémarrer Emby.
+2. Optionnel : supprimer `plugins/configurations/BookMeta.xml` (réglages du plugin).
+
+Les métadonnées déjà écrites restent dans Emby. **Le tri verrouillé reste figé** après désinstallation :
+voir [Limites connues](#limites-connues) pour la procédure de retour.
 
 ---
 
 ## Activation
 
-Les réglages se trouvent dans **Réglages de la bibliothèque Livres** (sections *Lecteurs de métadonnées locaux* et *Récupérateurs d'images*).
+Les réglages se trouvent dans **Médiathèque** → carte de la bibliothèque **Livres** (réglages de la bibliothèque).
 
 ### Lecteur de métadonnées
 
-- **BookMeta** (lecteur de métadonnées locales) : à cocher dans *Lecteurs de métadonnées locaux* si ce n'est pas déjà fait.
-  Il lit `metadata.opf` puis, à défaut, l'OPF interne de l'epub.
+Section **« Lecteurs de metadonnées »** → cocher **BookMeta**. Il lit `metadata.opf` puis, à défaut,
+l'OPF interne de l'epub.
 
 ### Récupérateur de couvertures — activation automatique
 
-Le récupérateur **BookMeta Embedded Cover** (couvertures de l'epub et du cbz) est proposé par Emby **décoché** :
-le plugin l'active automatiquement pour chaque bibliothèque de livres, **une seule fois** au démarrage.
+Section **« Book chercheurs d'image »** → **BookMeta Embedded Cover** (couvertures de l'epub et du cbz).
+
+Ce récupérateur est proposé par Emby **décoché** : le plugin l'active automatiquement pour chaque bibliothèque de
+livres, **une seule fois** au démarrage.
 
 - Il est ajouté aux récupérateurs d'images de la bibliothèque ; aucun autre réglage n'est modifié.
 - Si vous le décochez ensuite, il reste décoché : le plugin ne le recoche jamais.
 - Une bibliothèque créée après l'installation est traitée au démarrage suivant d'Emby.
-- Pour l'activer à la main : section *Récupérateurs d'images* → cocher **BookMeta Embedded Cover**.
+- Pour l'activer à la main : cocher **BookMeta Embedded Cover** dans la section ci-dessus.
 
-Après installation, lancer **Actualiser les métadonnées → Remplacer toutes les métadonnées et images**
-sur la bibliothèque pour appliquer le plugin aux livres déjà présents.
+### Option à laisser désactivée
+
+**« Enregistrer les images dans les dossiers multimédia »** : BookMeta n'écrit rien dans la bibliothèque ;
+laisser cette option décochée.
+
+Après installation ou changement de réglages, lancer **Actualiser les métadonnées → Remplacer toutes les
+métadonnées et images** sur la bibliothèque pour appliquer le plugin aux livres déjà présents.
 
 ---
 
@@ -85,7 +117,7 @@ Champs renseignés :
 | Résumé (HTML nettoyé) | Résumé |
 | Date de publication | Date de première diffusion et année |
 | Éditeur | Studios |
-| Sujets | Genres |
+| Sujets | Genres (voir [Limites connues](#limites-connues)) |
 | ISBN, BNF, Bindery | Identifiants externes |
 
 ### Couvertures
@@ -98,40 +130,58 @@ Dans l'ordre :
 
 Les PDF ne sont pas pris en charge en v0.1.0.
 
+### Journal
+
+Les avertissements du plugin sont écrits dans `logs/embyserver.txt` (ou `logs/embyserver-<n>.txt` pour les
+journaux tournés : prendre le plus récent). Dans l'image Docker : `/config/logs/`.
+
 ### Robustesse
 
 Un fichier malformé, un epub corrompu ou un champ absent ne provoque jamais d'erreur dans Emby : le plugin
-journalise un avertissement dans `/config/logs/embyserver.txt` et passe à la source suivante.
+journalise un avertissement et passe à la source suivante.
 
 ---
 
 ## Configuration
 
-Page **BookMeta** dans **Tableau de bord → Plugins** :
+Menu **BookMeta** (Emby Server) : case **« Extraire la couverture depuis le fichier epub »**, puis **Enregistrer**.
 
 | Option | Défaut | Effet |
 |--------|--------|-------|
-| Extraire la couverture depuis le fichier epub | activée | Si désactivée, la couverture déclarée dans l'epub n'est pas utilisée (les `cover.*` du dossier restent prises en compte). |
+| Extraire la couverture depuis le fichier epub | activée | Désactivée : aucune nouvelle extraction depuis l'epub (les `cover.*` du dossier restent prises en compte). |
+
+Désactiver l'option **n'efface pas** les couvertures déjà présentes : il faut supprimer l'image du livre puis
+actualiser ses métadonnées pour la retirer.
 
 ---
 
 ## Limites connues
 
 - **Auteurs en tag, pas en personnes.** Emby 4.10 n'affiche pas les personnes (auteurs) pour un livre ; ils
-  apparaissent comme tags. Il n'y a donc pas d'onglet **Auteurs** ni **Genres** pour les livres : utiliser
-  l'onglet **Mot-clé** (tags).
+  apparaissent comme tags, consultables dans l'onglet **Mot-clé**. Les onglets de la bibliothèque sont
+  **Livres**, **Mot-clé** et **Dossiers** : pas d'onglet Auteurs ni Genres pour les livres.
+- **Genres sans onglet.** Les sujets OPF sont renseignés dans le champ Genres d'Emby, mais n'ont pas d'onglet
+  dédié (filtrables par le filtre de la bibliothèque si disponible). Décision : pas de tags « Genre : ».
 - **Séries en tag et en tri.** Emby n'a pas de notion de série pour les livres : la série est un tag
   `Série : <nom>` et sert au tri (`Auteur - Série NN - Titre`). Le numéro de tome n'est pas affiché.
 - **Tri verrouillé.** BookMeta verrouille le champ **Tri** des livres pour que le tri calculé depuis l'OPF
   survive aux actualisations. Conséquences :
   - un tri saisi à la main est réécrit à chaque actualisation : le modifier dans `metadata.opf` à la place ;
-  - le verrou **reste après désinstallation** (le tri reste figé). Pour revenir au tri Emby : déverrouiller le
-    champ **Tri** de l'élément puis actualiser ses métadonnées.
+  - le verrou **reste après désinstallation** (le tri reste figé). Procédure de retour : déverrouiller le champ
+    **Tri** de l'élément, puis actualiser ses métadonnées.
+- **« Remplacer toutes les métadonnées »** écrase les modifications faites à la main dans Emby.
 - **PDF** : pas de couverture extraite.
 - **Livres audio** : hors périmètre.
 - **Pas de `.nfo`.** `metadata.opf` est la seule source de vérité ; aucun export NFO, ni par le plugin ni par le
   saver NFO d'Emby.
 - **Lecture seule.** Le plugin ne crée, ne modifie et ne supprime aucun fichier de la bibliothèque.
+- **Compatibilité** : testée sur Emby Server 4.10.2 uniquement.
+
+---
+
+## Licence
+
+Aucune licence. Dépôt public, tous droits réservés.
 
 ---
 

@@ -76,8 +76,8 @@ API standard d'Emby, aucun endpoint propre au plugin.
 | `Plugin.Name` | `BookMeta` |
 | `Plugin.Id` | `097ed1ba-f0ae-496f-8f56-e54599fe54b1` (fixé au squelette #1), **jamais modifié ensuite** |
 
-Ces noms sont ceux qu'un utilisateur coche/décoche dans « Lecteurs de métadonnées locaux » et « Récupérateurs
-d'images » d'une bibliothèque : les changer est un changement **BREAKING** (réglages perdus).
+Ces noms sont ceux qu'un utilisateur coche/décoche dans « Lecteurs de metadonnées » et « Book chercheurs d'image »
+d'une bibliothèque (libellés relevés à l'écran emby2, Emby 4.10.2, français) : les changer est un changement **BREAKING** (réglages perdus).
 
 ## 7. Écarts décidés (revue LOT-2, 2026-10-31)
 

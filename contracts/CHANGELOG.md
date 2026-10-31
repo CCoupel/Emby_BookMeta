@@ -2,6 +2,10 @@
 
 > Changements de contrats (API, schemas) : `BREAKING` | `CHANGED` | `ADDED`. Lu par le CDP au GATE 2.
 
+## [20261031-e] — v0.1.0 : libellés d'interface relevés en recette emby2 (0.1.0.5)
+
+- **[CHANGED]** `contracts/models.md` §6 : libellés réels des sections de la bibliothèque (« Lecteurs de metadonnées » ; « Book chercheurs d'image ») — les noms stables (`BookMeta`, `BookMeta Embedded Cover`, …) sont inchangés. Aucun BREAKING.
+
 ## [20261031-d] — v0.1.0 : activation automatique du récupérateur de couvertures
 
 - **[ADDED]** `contracts/models.md` §5 (configuration) : `PluginConfiguration.AutoEnabledLibraryIds` (liste d'identifiants de bibliothèques, défaut vide) ;
