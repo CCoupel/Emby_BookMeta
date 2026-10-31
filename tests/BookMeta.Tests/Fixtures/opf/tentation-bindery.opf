@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bindery-id" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>Tentation</dc:title>
+    <meta name="calibre:title_sort" content="Tentation"/>
+    <dc:creator opf:role="aut" opf:file-as="Meyer, Stephenie">Stephenie Meyer</dc:creator>
+    <dc:identifier id="bindery-id" opf:scheme="BINDERY">84</dc:identifier>
+    <dc:identifier opf:scheme="BNF">cb43546026q</dc:identifier>
+    <dc:language>fr</dc:language>
+    <dc:date>2006-01-01</dc:date>
+    <dc:description>Rejetée par celui qu elle aime passionnément, Bella ne s en relève pas…</dc:description>
+  </metadata>
+</package>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bindery-id" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>Titre complet</dc:title>
+    <meta name="calibre:title_sort" content="Titre complet"/>
+    <dc:creator opf:role="aut" opf:file-as="Martin, Alice">Alice Martin</dc:creator>
+    <dc:creator opf:file-as="Durand, Bob">Bob Durand</dc:creator>
+    <dc:creator opf:role="ill" opf:file-as="Petit, Claire">Claire Petit</dc:creator>
+    <dc:identifier id="bindery-id" opf:scheme="BINDERY">12</dc:identifier>
+    <dc:identifier opf:scheme="BNF">cb12345678x</dc:identifier>
+    <dc:identifier opf:scheme="ISBN">978-2-07-036822-8</dc:identifier>
+    <dc:identifier opf:scheme="UUID">aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee</dc:identifier>
+    <dc:language>fr</dc:language>
+    <dc:date>2021-03-15</dc:date>
+    <dc:publisher>Hachette</dc:publisher>
+    <dc:publisher>Le Livre de Poche</dc:publisher>
+    <dc:subject>Fantastique</dc:subject>
+    <dc:subject>fantastique</dc:subject>
+    <dc:subject>Jeunesse</dc:subject>
+  </metadata>
+</package>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bindery-id" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>L&#39;été &amp; la nuit</dc:title>
+    <meta name="calibre:title_sort" content="Ete et la nuit (L')"/>
+    <dc:creator opf:role="aut" opf:file-as="Dupont, Jean">Jean Dupont</dc:creator>
+    <dc:identifier id="bindery-id" opf:scheme="BINDERY">1</dc:identifier>
+    <dc:description>&lt;p&gt;Elle dit&amp;nbsp;: &amp;#39;bonjour&amp;#39; &amp;amp; sourit.&lt;/p&gt;&lt;p&gt;Fin&lt;br/&gt;Ligne   suivante&lt;/p&gt;</dc:description>
+  </metadata>
+</package>
