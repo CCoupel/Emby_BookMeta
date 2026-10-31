@@ -39,4 +39,17 @@ public class BookMapperSortTests
     [InlineData("Voltaire", "Voltaire")]
     public void NomDeTriDerive(string name, string expected) =>
         Assert.Equal(expected, BookMapper.AuthorSortName(new OpfCreator(name, null, null)));
+
+    [Theory]
+    [InlineData(-1.0)]
+    [InlineData(10000.0)]
+    [InlineData(1e12)]
+    public void IndexHorsBornes_IgnoreDansLeTri(double index) =>
+        Assert.Equal("A, B - S - T", BookMapper.BuildSortName(Doc("B A", "A, B", "T", "S", index)));
+
+    [Fact] public void IndexMaximal_EstConserve() =>
+        Assert.Equal("A, B - S 9999 - T", BookMapper.BuildSortName(Doc("B A", "A, B", "T", "S", 9999)));
+
+    [Fact] public void SerieSansAuteur() =>
+        Assert.Equal("S 03 - T", BookMapper.BuildSortName(Doc(null, null, "T", "S", 3)));
 }

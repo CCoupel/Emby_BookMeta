@@ -35,4 +35,29 @@ public class HtmlTextTests
     [Fact]
     public void ComparaisonLitterale_NEstPasPriseCommeBalise() =>
         Assert.Equal("si a < b alors", HtmlText.ToPlainText("si a < b alors"));
+
+    [Fact]
+    public void EntreePathologique_EstTraiteeRapidement()
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var r = HtmlText.ToPlainText(string.Concat(Enumerable.Repeat("<a", 500_000)) + " fin", out _);
+        sw.Stop();
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(1), $"trop lent : {sw.Elapsed}");
+        Assert.NotNull(r);
+    }
+
+    [Fact]
+    public void ChevronsOuvrantsEtEspaces_EnRafale_SontRapides()
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        HtmlText.ToPlainText(string.Concat(Enumerable.Repeat("<" + new string(' ', 200), 400)), out _);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void Description_EstPlafonnee()
+    {
+        var r = HtmlText.ToPlainText(new string('x', HtmlText.MaxLength * 3));
+        Assert.Equal(HtmlText.MaxLength, r!.Length);
+    }
 }

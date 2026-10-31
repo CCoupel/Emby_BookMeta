@@ -39,8 +39,15 @@ public class BookEmbeddedCoverProvider : IDynamicImageProvider
         var none = new DynamicImageResponse();
         try
         {
-            var item = (itemResult as MetadataResult<Book>)?.Item ?? itemResult.BaseItem;
-            if (type != ImageType.Primary || item == null || !Supports(item)) return Task.FromResult(none);
+            // Premier item porteur d'un Path : BaseItem du résultat, sinon l'Item du MetadataResult<Book> (parfois sans Path).
+            var item = new BaseItem?[] { itemResult.BaseItem, (itemResult as MetadataResult<Book>)?.Item }
+                .FirstOrDefault(i => i != null && !string.IsNullOrEmpty(i.Path));
+            if (item == null)
+            {
+                _logger.Debug("BookMeta : couverture embarquée ignorée, aucun item avec chemin");
+                return Task.FromResult(none);
+            }
+            if (type != ImageType.Primary || !Supports(item)) return Task.FromResult(none);
             var cover = Path.GetExtension(item.Path).Equals(".cbz", StringComparison.OrdinalIgnoreCase)
                 ? CbzCoverExtractor.Extract(item.Path, _logger)
                 : EpubCoverExtractor.Extract(item.Path, _logger);

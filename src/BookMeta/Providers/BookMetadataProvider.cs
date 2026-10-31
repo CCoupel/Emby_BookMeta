@@ -27,10 +27,8 @@ public class BookMetadataProvider : ILocalMetadataProvider<Book>, IHasItemChange
         {
             // Dossier dérivé de info.Path : ContainingFolderPath dépend d'un état statique d'Emby (BaseItem.FileSystem).
             Func<string, IEnumerable<string>> list = folder => directoryService.GetFilePaths(folder);
-            var source = OpfLocator.Locate(info.Path, null, list, _logger);
+            var source = OpfLocator.Locate(info.Path, null, list, _logger, cancellationToken);
             var book = source == null ? null : BookMapper.Map(source.Document);
-            if (source != null && book == null)
-                _logger.Warn("BookMeta : OPF sans titre ignoré ({0})", source.SourcePath);
             if (book != null)
             {
                 result.Item = book;
@@ -38,6 +36,10 @@ public class BookMetadataProvider : ILocalMetadataProvider<Book>, IHasItemChange
                 result.ResultLanguage = source!.Document.Language;
                 result.Provider = BookMapper.ProviderName;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

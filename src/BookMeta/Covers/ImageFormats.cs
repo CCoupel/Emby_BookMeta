@@ -4,8 +4,6 @@ namespace BookMeta.Covers;
 
 public static class ImageFormats
 {
-    public static readonly string[] Extensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-
     public static ImageFormat? FromExtension(string? extension) =>
         (extension ?? string.Empty).ToLowerInvariant() switch
         {

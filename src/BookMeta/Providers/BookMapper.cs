@@ -64,7 +64,7 @@ public static class BookMapper
         if (!string.IsNullOrWhiteSpace(opf.Series))
         {
             var series = opf.Series!;
-            parts.Add(opf.SeriesIndex is { } i ? series + " " + FormatIndex(i) : series);
+            parts.Add(opf.SeriesIndex is { } i && i >= 0 && i <= 9999 ? series + " " + FormatIndex(i) : series);
         }
         parts.Add(titleSort);
         return parts.Count == 1 ? titleSort : string.Join(" - ", parts);

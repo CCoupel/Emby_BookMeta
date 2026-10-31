@@ -16,7 +16,7 @@ public static class OpfLocator
     /// <param name="itemPath">Fichier du livre.</param>
     /// <param name="containingFolder">Dossier du livre ; déduit de <paramref name="itemPath"/> si nul.</param>
     /// <param name="listFilePaths">Liste les fichiers d'un dossier (ex. <c>IDirectoryService.GetFilePaths</c>) ; défaut : système de fichiers.</param>
-    public static OpfSource? Locate(string? itemPath, string? containingFolder, Func<string, IEnumerable<string>>? listFilePaths, ILogger? logger)
+    public static OpfSource? Locate(string? itemPath, string? containingFolder, Func<string, IEnumerable<string>>? listFilePaths, ILogger? logger, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -31,6 +31,7 @@ public static class OpfLocator
                     using var fs = new FileStream(sidecar, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                     if (OpfParser.Parse(fs, out var doc, out var err) && doc != null)
                     {
+                        if (doc.DescriptionDegraded) logger?.Warn("BookMeta : description trop lourde, texte dégradé ({0})", sidecar);
                         if (doc.Title != null) return new OpfSource(doc, OpfSourceKind.Sidecar, sidecar);
                         logger?.Warn("BookMeta : OPF sans titre {0}", sidecar);
                     }
@@ -44,6 +45,7 @@ public static class OpfLocator
 
             if (!string.IsNullOrEmpty(itemPath) && itemPath.EndsWith(".epub", StringComparison.OrdinalIgnoreCase))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (!EpubArchive.TryOpen(itemPath, out var epub, out var openErr))
                 {
                     logger?.Warn("BookMeta : epub illisible {0} ({1})", itemPath, openErr ?? "?");
@@ -56,6 +58,7 @@ public static class OpfLocator
                         if (s == null) logger?.Warn("BookMeta : pas d'OPF dans l'epub {0}", itemPath);
                         else if (OpfParser.Parse(s, out var doc, out var err) && doc != null)
                         {
+                            if (doc.DescriptionDegraded) logger?.Warn("BookMeta : description trop lourde, texte dégradé ({0})", itemPath);
                             if (doc.Title != null) return new OpfSource(doc, OpfSourceKind.EpubInternal, itemPath);
                             logger?.Warn("BookMeta : OPF interne sans titre dans {0}", itemPath);
                         }
@@ -66,6 +69,10 @@ public static class OpfLocator
 
             logger?.Debug("BookMeta : aucun OPF pour {0}", itemPath ?? "?");
             return null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

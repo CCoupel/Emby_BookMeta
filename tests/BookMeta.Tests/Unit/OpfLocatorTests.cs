@@ -78,4 +78,13 @@ public sealed class OpfLocatorTests : IDisposable
     [Fact]
     public void ListeurQuiLeve_NeRemonteAucuneException() =>
         Assert.Null(OpfLocator.Locate("/x/y.pdf", "/x", _ => throw new IOException("boum"), null));
+
+    [Fact]
+    public void Annulation_AvantOuvertureEpub_Propagee()
+    {
+        var book = WriteEpub("livre.epub", "Interne");
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        Assert.Throws<OperationCanceledException>(() => OpfLocator.Locate(book, _dir.FullName, null, null, cts.Token));
+    }
 }

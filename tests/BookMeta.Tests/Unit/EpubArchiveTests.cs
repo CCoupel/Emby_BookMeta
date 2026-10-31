@@ -111,4 +111,12 @@ public class EpubArchiveTests
         }
         finally { dir.Delete(true); }
     }
+
+    [Fact]
+    public void OpenEntry_RespecteMaxBytes()
+    {
+        using var epub = new EpubArchive(Zip(("big.bin", new string('a', 2000))));
+        Assert.Null(epub.OpenEntry("big.bin", 1000));
+        Assert.NotNull(epub.OpenEntry("big.bin", 4000));
+    }
 }

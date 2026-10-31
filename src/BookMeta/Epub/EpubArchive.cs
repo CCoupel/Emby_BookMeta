@@ -56,7 +56,7 @@ public sealed class EpubArchive : IDisposable
         {
             try
             {
-                using var s = OpenEntry("META-INF/container.xml");
+                using var s = OpenEntry("META-INF/container.xml", Opf.OpfParser.MaxBytes);
                 if (s == null) return null;
                 var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore, XmlResolver = null, CheckCharacters = false };
                 using var reader = XmlReader.Create(s, settings);
@@ -77,7 +77,7 @@ public sealed class EpubArchive : IDisposable
     public Stream? OpenOpf()
     {
         var root = RootfilePath;
-        return root == null ? null : OpenEntry(root);
+        return root == null ? null : OpenEntry(root, Opf.OpfParser.MaxBytes);
     }
 
     /// <summary>
@@ -115,11 +115,11 @@ public sealed class EpubArchive : IDisposable
 
     public bool HasEntry(string path) => Find(path) != null;
 
-    /// <summary>Contenu de l'entrée (copié en mémoire, borné à <see cref="MaxEntryBytes"/>), ou <c>null</c> si absente / trop grande / illisible.</summary>
-    public Stream? OpenEntry(string path)
+    /// <summary>Contenu de l'entrée (copié en mémoire, borné à <paramref name="maxBytes"/>, 32 Mo par défaut), ou <c>null</c> si absente / trop grande / illisible.</summary>
+    public Stream? OpenEntry(string path, int maxBytes = MaxEntryBytes)
     {
         var entry = Find(path);
-        if (entry == null || entry.Length > MaxEntryBytes) return null;
+        if (entry == null || entry.Length > maxBytes) return null;
         try
         {
             using var src = entry.Open();
@@ -128,7 +128,7 @@ public sealed class EpubArchive : IDisposable
             int n;
             while ((n = src.Read(buf, 0, buf.Length)) > 0)
             {
-                if (ms.Length + n > MaxEntryBytes) { ms.Dispose(); return null; }
+                if (ms.Length + n > maxBytes) { ms.Dispose(); return null; }
                 ms.Write(buf, 0, n);
             }
             ms.Position = 0;

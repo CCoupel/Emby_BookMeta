@@ -12,10 +12,12 @@ public static class CbzCoverExtractor
         {
             using var fs = new FileStream(cbzPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, FileOptions.SequentialScan);
             using var zip = new ZipArchive(fs, ZipArchiveMode.Read);
-            var entry = zip.Entries
-                .Where(e => e.Length > 0 && IsCandidate(e.FullName))
-                .OrderBy(e => e.FullName.Replace('\\', '/'), NaturalComparer.Instance)
-                .FirstOrDefault();
+            ZipArchiveEntry? entry = null;
+            foreach (var e in zip.Entries)
+            {
+                if (e.Length == 0 || !IsCandidate(e.FullName)) continue;
+                if (entry == null || NaturalComparer.Instance.Compare(e.FullName.Replace('\\', '/'), entry.FullName.Replace('\\', '/')) < 0) entry = e;
+            }
             var format = entry == null ? null : ImageFormats.FromExtension(Path.GetExtension(entry.Name));
             if (entry == null || format == null)
             {

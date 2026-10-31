@@ -193,4 +193,30 @@ public class OpfParserTests
         Assert.True(OpfParser.Parse(ms, out var doc));
         Assert.Equal("Tentation", doc!.Title);
     }
+
+    [Theory]
+    [InlineData("1/2/2020")]
+    [InlineData("02-01-2020")]
+    [InlineData("March 3, 2020")]
+    public void Dates_Ambigues_Refusees(string s) => Assert.Null(OpfParser.ParseDate(s));
+
+    [Fact]
+    public void Annee_EstCelleDeLOffsetDOrigine()
+    {
+        var d = OpfParser.ParseDate("2006-01-01T00:30:00+02:00")!.Value;
+        Assert.Equal(2006, d.Year);
+        Assert.Equal(1, d.Month);
+    }
+
+    [Fact]
+    public void Date_PrefereLaPublication_IgnoreCreationEtModification()
+    {
+        var d = Parse(@"<package xmlns='http://www.idpf.org/2007/opf'><metadata xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:opf='http://www.idpf.org/2007/opf'>
+            <dc:title>T</dc:title><dc:date opf:event='modification'>2024-05-05</dc:date><dc:date opf:event='creation'>2020-01-01</dc:date>
+            <dc:date opf:event='publication'>2006-10-02</dc:date></metadata></package>");
+        Assert.Equal(2006, d.Date!.Value.Year);
+        var onlyCreation = Parse(@"<package xmlns='http://www.idpf.org/2007/opf'><metadata xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:opf='http://www.idpf.org/2007/opf'>
+            <dc:title>T</dc:title><dc:date opf:event='creation'>2020-01-01</dc:date></metadata></package>");
+        Assert.Null(onlyCreation.Date);
+    }
 }

@@ -29,6 +29,8 @@ public sealed class OpfDocument
     public IReadOnlyList<OpfCreator> Creators { get; init; } = Array.Empty<OpfCreator>();
     /// <summary>Texte brut de <c>dc:description</c> (voir <see cref="HtmlText"/>).</summary>
     public string? Description { get; init; }
+    /// <summary><c>true</c> si le nettoyage de la description a dépassé son délai (texte dégradé).</summary>
+    public bool DescriptionDegraded { get; init; }
     public DateTimeOffset? Date { get; init; }
     public string? Language { get; init; }
     public IReadOnlyList<string> Publishers { get; init; } = Array.Empty<string>();

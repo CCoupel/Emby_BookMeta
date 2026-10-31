@@ -160,13 +160,16 @@ public static class OpfParser
             }
 
         var descEl = dc.FirstOrDefault(e => Is(e, "description"));
+        var degraded = false;
+        var description = descEl == null ? null : HtmlText.ToPlainText(descEl.Value, out degraded);
         return new OpfDocument
         {
             Title = title,
             TitleSort = titleSort,
             Creators = creators,
-            Description = descEl == null ? null : HtmlText.ToPlainText(descEl.Value),
-            Date = ParseDate(dc.Where(e => Is(e, "date")).Select(e => Clean(e.Value)).FirstOrDefault(v => v != null)),
+            Description = description,
+            DescriptionDegraded = degraded,
+            Date = ParseDate(dc.Where(e => Is(e, "date") && IsPublicationDate(e)).Select(e => Clean(e.Value)).FirstOrDefault(v => v != null)),
             Language = dc.Where(e => Is(e, "language")).Select(e => Clean(e.Value)).FirstOrDefault(v => v != null),
             Publishers = Distinct(dc.Where(e => Is(e, "publisher")).Select(e => Clean(e.Value))),
             Subjects = Distinct(dc.Where(e => Is(e, "subject")).Select(e => Clean(e.Value))),
@@ -179,6 +182,13 @@ public static class OpfParser
     }
 
     // ---------------------------------------------------------------- utilitaires
+
+    /// <summary><c>opf:event</c> absent ou « publication » (OPF 2) ; « creation » / « modification » sont ignorées.</summary>
+    private static bool IsPublicationDate(XElement e)
+    {
+        var ev = Clean(Attr(e, "event"));
+        return ev == null || string.Equals(ev, "publication", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static bool Is(XElement e, string localName) => e.Name.LocalName == localName;
 
@@ -202,16 +212,21 @@ public static class OpfParser
     private static double? ParseDouble(string? s) =>
         s != null && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) && !double.IsNaN(d) && !double.IsInfinity(d) ? d : null;
 
-    private static readonly string[] DateFormats = { "yyyy-MM-dd", "yyyy-MM", "yyyy" };
+    private static readonly string[] DateFormats =
+    {
+        "yyyy-MM-dd", "yyyy-MM", "yyyy",
+        "yyyy-MM-ddTHH:mm:ssK", "yyyy-MM-ddTHH:mm:ss.FFFFFFFK", "yyyy-MM-ddTHH:mmK", "yyyy-MM-ddTHH:mm:ss",
+    };
 
-    /// <summary>Formats <c>yyyy-MM-dd</c>, <c>yyyy-MM</c>, <c>yyyy</c>, ISO 8601 complet. Invalide ou année &lt; 1000 (valeur « inconnue » de Calibre) → <c>null</c>.</summary>
+    /// <summary>
+    /// Formats <c>yyyy-MM-dd</c>, <c>yyyy-MM</c>, <c>yyyy</c>, ISO 8601 complet ; formats ambigus (<c>1/2/2020</c>) refusés.
+    /// Le décalage d'origine est conservé (l'année reste celle écrite dans l'OPF). Invalide ou année &lt; 1000 (valeur « inconnue » de Calibre) → <c>null</c>.
+    /// </summary>
     public static DateTimeOffset? ParseDate(string? s)
     {
         s = Clean(s);
         if (s == null) return null;
-        const DateTimeStyles styles = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal;
-        if (!DateTimeOffset.TryParseExact(s, DateFormats, CultureInfo.InvariantCulture, styles, out var d)
-            && !DateTimeOffset.TryParse(s, CultureInfo.InvariantCulture, styles, out d))
+        if (!DateTimeOffset.TryParseExact(s, DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var d))
             return null;
         return d.Year < 1000 ? null : d;
     }

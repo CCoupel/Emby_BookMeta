@@ -20,7 +20,7 @@ public static class EpubCoverExtractor
             {
                 var rootfile = epub!.RootfilePath;
                 if (rootfile == null) { logger?.Warn("BookMeta : pas de rootfile dans {0}", epubPath); return null; }
-                using var opfStream = epub.OpenEntry(rootfile);
+                using var opfStream = epub.OpenEntry(rootfile, OpfParser.MaxBytes);
                 OpfDocument? opf = null;
                 string? perr = null;
                 if (opfStream == null || !OpfParser.Parse(opfStream, out opf, out perr) || opf == null)
