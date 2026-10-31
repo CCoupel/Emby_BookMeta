@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="current-major" content="1">
+<title>BookMeta</title>
+<meta name="description" content="Plugin Emby : titres, auteurs, résumés, séries et couvertures de votre bibliothèque Livres, lus depuis vos fichiers locaux.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">BookMeta <span class="ver">v1.0.0</span></div>
+  <nav>
+    <a href="#problems" data-i18n="nav.problems">Le souci</a>
+    <a href="#solutions" data-i18n="nav.solutions">Ce que ça change</a>
+    <a href="#architecture" data-i18n="nav.arch">Sous le capot</a>
+    <a href="#deployment" data-i18n="nav.deploy">Installer</a>
+    <a href="#faq" data-i18n="nav.faq">Questions</a>
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="fr">FR</button><span>|</span><button class="lang-btn" data-lang="en">EN</button>
+    </div>
+  </nav>
+</header>
+<main>
+<div class="hero">
+  <div>
+    <h1 data-i18n="hero.title">Une bibliothèque Livres enfin <em>propre</em></h1>
+    <p data-i18n="hero.sub"></p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/CCoupel/Emby_BookMeta/releases" data-i18n="hero.cta">Télécharger v1.0.0</a>
+      <a class="btn alt" href="#solutions" data-i18n="hero.cta2">Voir le résultat</a>
+    </div>
+  </div>
+  <div class="stack" aria-hidden="true">
+    <div class="spine"><span data-i18n="spine.1"></span><small data-i18n="spine.1s"></small></div>
+    <div class="spine"><span data-i18n="spine.2"></span><small data-i18n="spine.2s"></small></div>
+    <div class="spine"><span data-i18n="spine.3"></span><small data-i18n="spine.3s"></small></div>
+    <div class="spine"><span data-i18n="spine.4"></span><small data-i18n="spine.4s"></small></div>
+  </div>
+</div>
+
+<section id="problems">
+  <h2 data-i18n="prob.title"></h2>
+  <div class="grid">
+    <div class="card"><h3 data-i18n="prob.1.t"></h3><p data-i18n="prob.1.p"></p></div>
+    <div class="card"><h3 data-i18n="prob.2.t"></h3><p data-i18n="prob.2.p"></p></div>
+    <div class="card"><h3 data-i18n="prob.3.t"></h3><p data-i18n="prob.3.p"></p></div>
+  </div>
+</section>
+
+<section id="solutions">
+  <h2 data-i18n="sol.title"></h2>
+  <p class="lead" data-i18n="sol.lead"></p>
+  <div class="grid">
+    <div class="card"><span class="chip">OPF</span><h3 data-i18n="sol.meta.t"></h3><p data-i18n="sol.meta.p"></p></div>
+    <div class="card"><span class="chip">Mot-clé</span><h3 data-i18n="sol.auth.t"></h3><p data-i18n="sol.auth.p"></p></div>
+    <div class="card"><span class="chip">epub · cbz</span><h3 data-i18n="sol.cover.t"></h3><p data-i18n="sol.cover.p"></p></div>
+    <div class="card"><span class="chip">0 réseau</span><h3 data-i18n="sol.safe.t"></h3><p data-i18n="sol.safe.p"></p></div>
+  </div>
+  <h2 style="margin-top:48px" data-i18n="new.title"></h2>
+  <p class="lead" data-i18n="new.lead"></p>
+  <div class="grid">
+    <div class="card"><h3><span data-i18n="new.cover.t"></span><span class="badge" data-badge-version="v1.0.0">Nouveau v1.0.0</span></h3><p data-i18n="new.cover.p"></p></div>
+    <div class="card"><h3><span data-i18n="new.sort.t"></span><span class="badge" data-badge-version="v1.0.0">Nouveau v1.0.0</span></h3><p data-i18n="new.sort.p"></p></div>
+    <div class="card"><h3><span data-i18n="new.cfg.t"></span><span class="badge" data-badge-version="v1.0.0">Nouveau v1.0.0</span></h3><p data-i18n="new.cfg.p"></p></div>
+  </div>
+  <h2 style="margin-top:48px" data-i18n="shot.title"></h2>
+  <div class="shots">
+  <figure data-shot="livres-grille"><img src="assets/livres-grille.webp" width="1288" height="931" loading="lazy" alt="Bibliothèque Livres dans Emby, couvertures triées par auteur"><figcaption data-i18n="shot.1"></figcaption></figure>
+  <figure data-shot="mot-cle"><img src="assets/mot-cle.webp" width="1458" height="667" loading="lazy" alt="Onglet Mot-clé : parcours par auteur et par série"><figcaption data-i18n="shot.2"></figcaption></figure>
+  <figure data-shot="fiche-livre"><img src="assets/fiche-livre.webp" width="1458" height="694" loading="lazy" alt="Fiche d'un livre avec couverture, année et résumé"><figcaption data-i18n="shot.3"></figcaption></figure>
+  <figure data-shot="configuration"><img src="assets/configuration.webp" width="1458" height="374" loading="lazy" alt="Page de configuration du plugin BookMeta"><figcaption data-i18n="shot.4"></figcaption></figure>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2 data-i18n="arch.title"></h2>
+  <p class="lead" data-i18n="arch.lead"></p>
+  <div class="arch">
+    <div class="node"><b data-i18n="arch.n1"></b><span data-i18n="arch.n1s"></span></div><div class="arrow">→</div>
+    <div class="node"><b data-i18n="arch.n2"></b><span data-i18n="arch.n2s"></span></div><div class="arrow">→</div>
+    <div class="node"><b data-i18n="arch.n3"></b><span data-i18n="arch.n3s"></span></div><div class="arrow">→</div>
+    <div class="node"><b data-i18n="arch.n4"></b><span data-i18n="arch.n4s"></span></div>
+  </div>
+  <p class="lead" data-i18n="arch.stack"></p>
+</section>
+
+<section id="deployment">
+  <h2 data-i18n="dep.title"></h2>
+  <p class="lead" data-i18n="dep.lead"></p>
+  <div class="grid">
+    <div class="card"><h3 data-i18n="dep.rel.t"></h3><p data-i18n="dep.rel.p"></p></div>
+    <div class="card"><h3 data-i18n="dep.src.t"></h3><p data-i18n="dep.src.p"></p></div>
+    <div class="card"><h3 data-i18n="dep.cfg.t"></h3><p data-i18n="dep.cfg.p"></p></div>
+  </div>
+  <h3 style="margin-top:28px" data-i18n="dep.rel.t"></h3>
+<pre>sha256sum -c BookMeta-1.0.0.dll.sha256
+docker cp BookMeta-1.0.0.dll &lt;conteneur&gt;:/config/plugins/BookMeta.dll
+# ou : kubectl cp BookMeta-1.0.0.dll &lt;namespace&gt;/&lt;pod&gt;:/config/plugins/BookMeta.dll
+docker restart &lt;conteneur&gt;</pre>
+  <h3 style="margin-top:28px" data-i18n="dep.src.t"></h3>
+<pre>git clone https://github.com/CCoupel/Emby_BookMeta.git
+cd Emby_BookMeta
+bash scripts/ci.sh        # build Release -&gt; dist/BookMeta.dll + tests xUnit
+# ou : dotnet build src/BookMeta/BookMeta.csproj -c Release -o dist/</pre>
+  <h3 style="margin-top:28px" data-i18n="dep.cfg.t"></h3>
+  <p class="lead" data-i18n="dep.cfgopt"></p>
+  <div class="tw"><table>
+    <tr><th data-i18n="dep.plat"></th><td data-i18n="dep.plat2"></td></tr>
+    <tr><th>Release</th><td><a href="https://github.com/CCoupel/Emby_BookMeta/releases">github.com/CCoupel/Emby_BookMeta/releases</a></td></tr>
+    <tr><th>Journal</th><td><code>/config/logs/embyserver*.txt</code> <span data-i18n="log.note">(le plus récent)</span></td></tr>
+  </table></div>
+</section>
+
+<section id="faq">
+  <h2 data-i18n="faq.title"></h2>
+  <details><summary data-i18n="faq.1.q"></summary><p data-i18n="faq.1.a"></p></details>
+  <details><summary data-i18n="faq.2.q"></summary><p data-i18n="faq.2.a"></p></details>
+  <details><summary data-i18n="faq.3.q"></summary><p data-i18n="faq.3.a"></p></details>
+  <details><summary data-i18n="faq.4.q"></summary><p data-i18n="faq.4.a"></p></details>
+  <details><summary data-i18n="faq.5.q"></summary><p data-i18n="faq.5.a"></p></details>
+</section>
+</main>
+<footer><span data-i18n="foot"></span><a href="https://github.com/CCoupel/Emby_BookMeta">GitHub</a></footer>
+</div>
+<script src="assets/lang.js"></script>
+<script src="assets/badges.js"></script>
+</body>
+</html>
