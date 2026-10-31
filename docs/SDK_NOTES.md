@@ -36,7 +36,7 @@ Légende : `[Common]` = MediaBrowser.Common, `[Controller]` = MediaBrowser.Contr
 | `IMetadataProvider` | `string Name { get; }` — **clé des réglages de bibliothèque** (voir §4) |
 | `ILocalMetadataProvider<T>` | `Task<MetadataResult<T>> GetMetadata(ItemInfo info, LibraryOptions libraryOptions, IDirectoryService directoryService, CancellationToken cancellationToken)` |
 | `IHasItemChangeMonitor` | `bool HasChanged(BaseItem item, LibraryOptions libraryOptions, IDirectoryService directoryService)` |
-| `IHasOrder` | `int Order { get; }` |
+| `IHasOrder` | `int Order { get; }` — **non implémenté** : l'ordre des lecteurs vient des réglages de bibliothèque (`LocalMetadataReaderOrder`) |
 | `ItemInfo` | `Id`, `Path`, `Name`, `ContainingFolderPath`, `Container`, `IsInMixedFolder` |
 | `MetadataResult<T> : BaseMetadataResult` | `T Item`, `HasMetadata`, `People`, `Images`, `ResultLanguage`, `Provider`, `BaseItem` |
 | `IImageProvider` | `string Name { get; }`, `bool Supports(BaseItem item)` |
@@ -102,7 +102,7 @@ src/BookMeta/
 │   └── HtmlText.cs            description → texte brut (entités, <br>/<p> → \n, balises retirées)
 ├── Epub/EpubArchive.cs        ZipArchive lecture : container.xml → rootfile, OpenOpf, ResolveHref, OpenEntry
 ├── Covers/                    CoverFileLocator, EpubCoverExtractor, CbzCoverExtractor, ImageFormats                       [LOT-2, tâche 9]
-└── Providers/                 BookMetadataProvider (ILocalMetadataProvider<Book>, IHasItemChangeMonitor, IHasOrder), BookMapper (pur),
+└── Providers/                 BookMetadataProvider (ILocalMetadataProvider<Book>, IHasItemChangeMonitor), BookMapper (pur),
                                BookCoverFileProvider (ILocalImageFileProvider), BookEmbeddedCoverProvider (IDynamicImageProvider)
 tests/BookMeta.Tests/          xUnit 2.6.2 ; Unit/ (dev-plugin), Integration/<Theme>/<Lot>/ (test-writer), Fixtures/
 ```

@@ -9,7 +9,7 @@
 
 | Priorité | Source | Condition |
 |----------|--------|-----------|
-| 1 | `metadata.opf` dans le dossier du livre (`ItemInfo.ContainingFolderPath`) | fichier présent et XML lisible |
+| 1 | `metadata.opf` dans le dossier du livre (dossier = `Path.GetDirectoryName(item.Path)` ; `ContainingFolderPath` dépend d'un état statique d'Emby) | fichier présent et XML lisible |
 | 2 | OPF interne de l'epub : `META-INF/container.xml` → `rootfiles/rootfile[@full-path]` | item `.epub`, archive zip lisible |
 | — | aucune | `HasMetadata = false` (Emby garde le nom de fichier), log `Debug` |
 
@@ -78,3 +78,20 @@ API standard d'Emby, aucun endpoint propre au plugin.
 
 Ces noms sont ceux qu'un utilisateur coche/décoche dans « Lecteurs de métadonnées locaux » et « Récupérateurs
 d'images » d'une bibliothèque : les changer est un changement **BREAKING** (réglages perdus).
+
+## 7. Écarts décidés (revue LOT-2, 2026-10-31)
+
+Précisions apportées à l'implémentation, jugées justifiées par la revue ; elles complètent les sections ci-dessus.
+
+| Sujet | Règle retenue |
+|-------|---------------|
+| Dates | Année < 1000 ignorée (valeur « inconnue » de Calibre) ; année lue dans le décalage d'origine ; formats ambigus (`1/2/2020`) refusés ; `dc:date` d'`opf:event` `creation` / `modification` ignoré |
+| OPF sans titre | Écarté avec `Warn` ; la recherche continue (sidecar → OPF interne de l'epub) ; `HasMetadata = false` si aucun OPF titré |
+| Dossier du livre | Dérivé de `item.Path` (jamais `ContainingFolderPath`) |
+| Couverture epub | Candidats dans l'ordre `meta cover` → `cover-image` → images du manifest ; un candidat dont l'entrée est absente ou vide laisse passer le suivant ; `Warn` si des candidats existaient sans résultat |
+| Série sans auteur | `SortName = "<Série> NN - <titre de tri>"` |
+| Index de série | Borné à `0 ≤ i ≤ 9999` ; hors bornes, ignoré dans le tri (le Tag « Série : X » est conservé) |
+| « Pas d'image » | Réponse `DynamicImageResponse` **vide** (ni `Stream` ni `Path`), jamais `null` — *à confirmer en recette emby2* |
+| Description | Plafonnée à 64 Ko avant nettoyage ; nettoyage borné par un délai (1 s), repli linéaire + `Warn` |
+| Tailles | OPF et `container.xml` ≤ 5 Mo ; image de couverture ≤ 32 Mo |
+
