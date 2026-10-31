@@ -9,7 +9,12 @@ public sealed record OpfIdentifier(string Scheme, string Value);
 /// <summary>Entrée du manifest (<c>item</c>) d'un OPF.</summary>
 public sealed record OpfManifestItem(string? Id, string Href, string? MediaType, string? Properties)
 {
-    public bool IsImage => MediaType != null && MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+
+    /// <summary><c>media-type</c> image/*, ou (media-type absent) extension d'image connue.</summary>
+    public bool IsImage => MediaType != null
+        ? MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+        : ImageExtensions.Contains(Path.GetExtension(Href), StringComparer.OrdinalIgnoreCase);
 
     public bool HasProperty(string property) =>
         Properties != null && Properties.Split(' ', StringSplitOptions.RemoveEmptyEntries)
@@ -39,15 +44,19 @@ public sealed class OpfDocument
     public IEnumerable<OpfCreator> Authors => Creators.Where(c =>
         string.IsNullOrWhiteSpace(c.Role) || string.Equals(c.Role.Trim(), "aut", StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Image de couverture du manifest : OPF 2 (<c>meta cover</c>), sinon OPF 3 (<c>cover-image</c>), sinon première image.</summary>
-    public OpfManifestItem? FindCoverItem()
+    /// <summary>Candidates à la couverture par priorité : OPF 2 (<c>meta cover</c>), OPF 3 (<c>cover-image</c>), puis les images du manifest dans l'ordre. Images seulement.</summary>
+    public IEnumerable<OpfManifestItem> CoverCandidates()
     {
+        var seen = new HashSet<OpfManifestItem>();
         if (!string.IsNullOrEmpty(CoverId))
-        {
-            var byId = Manifest.FirstOrDefault(m => string.Equals(m.Id, CoverId, StringComparison.Ordinal));
-            if (byId != null) return byId;
-        }
-        return Manifest.FirstOrDefault(m => m.HasProperty("cover-image"))
-               ?? Manifest.FirstOrDefault(m => m.IsImage);
+            foreach (var m in Manifest.Where(m => string.Equals(m.Id, CoverId, StringComparison.Ordinal) && m.IsImage))
+                if (seen.Add(m)) yield return m;
+        foreach (var m in Manifest.Where(m => m.HasProperty("cover-image") && m.IsImage))
+            if (seen.Add(m)) yield return m;
+        foreach (var m in Manifest.Where(m => m.IsImage))
+            if (seen.Add(m)) yield return m;
     }
+
+    /// <summary>Première candidate de <see cref="CoverCandidates"/>.</summary>
+    public OpfManifestItem? FindCoverItem() => CoverCandidates().FirstOrDefault();
 }
