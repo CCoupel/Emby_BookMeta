@@ -7,7 +7,7 @@ et les couvertures du dossier, de l'epub ou du `.cbz`.
 **Aucun appel réseau** : le plugin ne consulte aucun service externe. Il ne modifie jamais les fichiers de la
 bibliothèque et n'écrit aucun `.nfo`.
 
-> Version en développement (v0.1.0). Le plugin n'est pas encore publié dans une release.
+> Version **1.0.0** — première version officielle. Compatibilité : **Emby Server 4.10.2**.
 
 ---
 
@@ -29,12 +29,12 @@ Un fichier = un item : un livre fourni en deux formats (ex. `.pdf` + `.cbz`) app
 
 ## Installation
 
-1. Télécharger l'asset `BookMeta-X.Y.Z.dll` et son `BookMeta-X.Y.Z.dll.sha256` depuis la release GitHub
-   `vX.Y.Z` (ou, en local, `bash scripts/ci.sh` produit `dist/BookMeta.dll`).
+1. Télécharger l'asset `BookMeta-1.0.0.dll` et son `BookMeta-1.0.0.dll.sha256` depuis la release GitHub
+   `v1.0.0` (ou, en local, `bash scripts/ci.sh` produit `dist/BookMeta.dll`).
 2. Vérifier l'intégrité **avant** de renommer le fichier :
 
    ```bash
-   sha256sum -c BookMeta-X.Y.Z.dll.sha256
+   sha256sum -c BookMeta-1.0.0.dll.sha256
    ```
 
 3. Copier la DLL **sous le nom `BookMeta.dll`** dans le dossier `plugins` du répertoire de données d'Emby :
@@ -44,8 +44,8 @@ Un fichier = un item : un livre fourni en deux formats (ex. `.pdf` + `.cbz`) app
    Exemples (à adapter, ce ne sont pas les seules méthodes) :
 
    ```bash
-   docker cp BookMeta-X.Y.Z.dll <conteneur>:/config/plugins/BookMeta.dll
-   kubectl cp BookMeta-X.Y.Z.dll <namespace>/<pod>:/config/plugins/BookMeta.dll
+   docker cp BookMeta-1.0.0.dll <conteneur>:/config/plugins/BookMeta.dll
+   kubectl cp BookMeta-1.0.0.dll <namespace>/<pod>:/config/plugins/BookMeta.dll
    ```
 
 4. Redémarrer Emby (`docker restart <conteneur>` ou `kubectl rollout restart`).
@@ -128,7 +128,7 @@ Dans l'ordre :
 2. couverture de l'epub (`meta cover` OPF 2, `cover-image` OPF 3, sinon première image du manifest) ;
 3. première image d'un `.cbz`.
 
-Les PDF ne sont pas pris en charge en v0.1.0.
+Les PDF ne sont pas pris en charge.
 
 ### Journal
 
@@ -175,7 +175,7 @@ actualiser ses métadonnées pour la retirer.
 - **Pas de `.nfo`.** `metadata.opf` est la seule source de vérité ; aucun export NFO, ni par le plugin ni par le
   saver NFO d'Emby.
 - **Lecture seule.** Le plugin ne crée, ne modifie et ne supprime aucun fichier de la bibliothèque.
-- **Compatibilité** : testée sur Emby Server 4.10.2 uniquement.
+- **Compatibilité** : Emby Server 4.10.2 uniquement.
 
 ---
 
