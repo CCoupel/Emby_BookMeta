@@ -18,7 +18,7 @@ namespace BookMeta.Tests.Integration.Plugin.Smoke
         private const string ExpectedPluginId = "097ed1ba-f0ae-496f-8f56-e54599fe54b1";
 
         // Version du milestone (X.Y.Z) ; le 4e champ « a » est incrémenté par deployer au /publish : non testé.
-        private const string ExpectedMilestone = "0.1.0";
+        private const string ExpectedMilestone = "1.0.0";
 
         private static Type PluginType => typeof(global::BookMeta.Plugin);
 
