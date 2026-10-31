@@ -38,11 +38,16 @@ namespace BookMeta.Tests.Support
             return new BookEntity { Path = bookPath, Name = System.IO.Path.GetFileNameWithoutExtension(bookPath) };
         }
 
-        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log)
+        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log,
+            Func<long, BaseItem?>? itemLookup = null, long itemId = 0)
         {
             // ASSUMPTION : ctor (ILogManager, IFileSystem) — cf. SDK_NOTES « injection par constructeur ».
             var provider = new global::BookMeta.Providers.BookMetadataProvider(log.Manager, RealFs.FileSystem());
-            var info = new ItemInfo(NewBook(bookPath));
+            // Recette D1 : l'item réel est retrouvé par ItemInfo.Id via BaseItem.LibraryManager (seam interne ItemLookup).
+            if (itemLookup != null) provider.ItemLookup = itemLookup;
+            var book = NewBook(bookPath);
+            book.InternalId = itemId;
+            var info = new ItemInfo(book);
             return provider.GetMetadata(info, new LibraryOptions(), RealFs.DirectoryService(), CancellationToken.None)
                 .GetAwaiter().GetResult();
         }
@@ -113,7 +118,8 @@ namespace BookMeta.Tests.Support
 
         private static Exception NotWired() => new NotImplementedException("SpecApi non branché : dotnet test -p:Lot2Specs=true");
 
-        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log) => throw NotWired();
+        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log,
+            Func<long, BaseItem?>? itemLookup = null, long itemId = 0) => throw NotWired();
         public static bool HasChanged(string bookPath, DateTime dateLastRefreshedUtc, RecordingLogger log) => throw NotWired();
         public static string MetadataProviderName(RecordingLogger log) => throw NotWired();
         public static List<LocalImageInfo> GetFolderCovers(string bookPath, RecordingLogger log) => throw NotWired();
@@ -126,15 +132,6 @@ namespace BookMeta.Tests.Support
         public static string EmbeddedCoverProviderName(RecordingLogger log) => throw NotWired();
         public static ImageType[] EmbeddedSupportedImages(string bookPath, RecordingLogger log) => throw NotWired();
 #endif
-
-        /// <summary>Tri effectif d'un livre : ForcedSortName (membre non public, par réflexion) s'il existe et est renseigné, sinon SortName.</summary>
-        public static string? EffectiveSortName(BaseItem item)
-        {
-            var p = typeof(BaseItem).GetProperty("ForcedSortName",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-            var forced = p?.GetValue(item) as string;
-            return string.IsNullOrEmpty(forced) ? item.SortName : forced;
-        }
 
         /// <summary>Vrai si la réponse porte une image (Stream ou Path) ; « pas d'image » = null, ou Stream et Path vides.</summary>
         public static bool HasImage(DynamicImageResponse? r) => r != null && (r.Stream != null || !string.IsNullOrEmpty(r.Path));

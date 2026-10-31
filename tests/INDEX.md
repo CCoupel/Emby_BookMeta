@@ -19,3 +19,4 @@
 | tests/BookMeta.Tests/Integration/Covers/Epub/ | integration | covers | LOT-2 / couverture extraite de l'epub (OPF 2, OPF 3, premiere image) | feature | |
 | tests/BookMeta.Tests/Integration/Covers/Cbz/ | integration | covers | LOT-2 / premiere image du cbz (tri naturel) | feature | |
 | tests/procedures/livres/recette-livres/ | procedure | providers | LOT-2 / recette emby2 sur les livres de reference | feature | |
+| tests/BookMeta.Tests/Integration/Mapping/Tri/ | integration | providers | LOT-2 / régression D1 : tri verrouillé sur l'item réel (SortName ∈ LockedFields) | regression | |
