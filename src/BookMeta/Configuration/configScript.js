@@ -11,6 +11,15 @@ define([], function () {
             if (el) { el.textContent = text || ''; }
         }
 
+        var savedTimer = null;
+
+        // Retour visible en plus du toast Emby standard (qui peut passer inaperçu).
+        function showSaved() {
+            setStatus('Configuration enregistrée.');
+            if (savedTimer) { clearTimeout(savedTimer); }
+            savedTimer = setTimeout(function () { setStatus(''); }, 5000);
+        }
+
         function load() {
             ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (cfg) {
                 // Absent (ancienne configuration) : le défaut du plugin est « activé ».
@@ -28,6 +37,7 @@ define([], function () {
                 cfg.EnableEpubCoverExtraction = view.querySelector('#EnableEpubCoverExtraction').checked;
                 return ApiClient.updatePluginConfiguration(PLUGIN_ID, cfg).then(function () {
                     Dashboard.processPluginConfigurationUpdateResult();
+                    showSaved();
                 }, function () {
                     setStatus('Échec de l\'enregistrement.');
                 });

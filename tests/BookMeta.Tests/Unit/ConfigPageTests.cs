@@ -26,7 +26,9 @@ public class ConfigPageTests
     public void Page_ExposeLaCase_ActiveeParDefaut_SansLesIdentifiantsDeBibliotheques()
     {
         var html = Resource("configPage.html");
-        Assert.Matches("id=\"EnableEpubCoverExtraction\"[^>]*\\bchecked\\b", html);
+        Assert.Contains("is=\"emby-checkbox\"", html);
+        Assert.Contains("data-require=\"emby-checkbox", html);
+        Assert.Contains("checkboxContainer", html);
         Assert.Contains("BookMeta Embedded Cover", html);
         Assert.DoesNotContain("AutoEnabledLibraryIds", html);
     }
