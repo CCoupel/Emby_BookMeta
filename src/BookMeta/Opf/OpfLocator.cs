@@ -8,7 +8,7 @@ public enum OpfSourceKind { Sidecar, EpubInternal }
 /// <summary>OPF lu et sa provenance (<see cref="SourcePath"/> : fichier <c>metadata.opf</c> ou epub).</summary>
 public sealed record OpfSource(OpfDocument Document, OpfSourceKind Kind, string SourcePath);
 
-/// <summary>Trouve l'OPF d'un livre : <c>metadata.opf</c> du dossier, sinon OPF interne de l'epub. Ne lève jamais.</summary>
+/// <summary>Trouve l'OPF d'un livre : <c>metadata.opf</c> du dossier, sinon OPF interne de l'epub ; un OPF sans titre est écarté (Warn). Ne lève jamais.</summary>
 public static class OpfLocator
 {
     public const string SidecarName = "metadata.opf";
@@ -30,8 +30,11 @@ public static class OpfLocator
                 {
                     using var fs = new FileStream(sidecar, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                     if (OpfParser.Parse(fs, out var doc, out var err) && doc != null)
-                        return new OpfSource(doc, OpfSourceKind.Sidecar, sidecar);
-                    logger?.Warn("BookMeta : OPF illisible {0} ({1})", sidecar, err ?? "?");
+                    {
+                        if (doc.Title != null) return new OpfSource(doc, OpfSourceKind.Sidecar, sidecar);
+                        logger?.Warn("BookMeta : OPF sans titre {0}", sidecar);
+                    }
+                    else logger?.Warn("BookMeta : OPF illisible {0} ({1})", sidecar, err ?? "?");
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
@@ -52,7 +55,10 @@ public static class OpfLocator
                         using var s = epub!.OpenOpf();
                         if (s == null) logger?.Warn("BookMeta : pas d'OPF dans l'epub {0}", itemPath);
                         else if (OpfParser.Parse(s, out var doc, out var err) && doc != null)
-                            return new OpfSource(doc, OpfSourceKind.EpubInternal, itemPath);
+                        {
+                            if (doc.Title != null) return new OpfSource(doc, OpfSourceKind.EpubInternal, itemPath);
+                            logger?.Warn("BookMeta : OPF interne sans titre dans {0}", itemPath);
+                        }
                         else logger?.Warn("BookMeta : OPF interne illisible dans {0} ({1})", itemPath, err ?? "?");
                     }
                 }
