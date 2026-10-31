@@ -6,9 +6,10 @@
 
 - **Version** : 1.0.0 (PROD `deployment/emby`, `.prev` = 0.1.0 ; QUALIF emby2 = 1.0.0.1)
 - **Releases** : v0.1.0 et v1.0.0 publiées sur GitHub
-- **Branche** : `main` (72a636a, tag v1.0.0) ; `gh-pages` = site marketing https://CCoupel.github.io/Emby_BookMeta/ (worktree `MARKETING/`)
+- **Branche** : `main` (tag v1.0.0 sur 72a636a ; commits mémoire/template après) ; `gh-pages` = site marketing https://CCoupel.github.io/Emby_BookMeta/ (worktree `MARKETING/`)
 - **Travail en cours** : aucun. Milestones v0.1.0 et v1.0.0 fermés ; aucune issue ouverte.
 - **Cadrage produit** : `docs/CADRAGE.md`
+- **Template Claude** : v3.29.2 (sync 2026-10-31, `a3770a4`) — `/end-session` étape 4bis et `/start-session` 5bis classent les branches résiduelles
 
 ## Regles critiques
 
