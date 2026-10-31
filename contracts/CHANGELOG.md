@@ -4,8 +4,9 @@
 
 ## [20261031-b] — v0.1.0 : défauts de recette emby2 (cycle 3)
 
-- **[CHANGED]** `contracts/models.md` §2/§4/§7 : `SortName` verrouillé sur l'item réel (effacé sinon par `AfterMetadataRefresh`) ;
-  `BookEmbeddedCoverProvider.Supports` vrai pour un livre sans chemin ; activation manuelle de « BookMeta Embedded Cover » documentée. Aucun BREAKING.
+- **[ADDED]** `contracts/models.md` §7 (« Écarts décidés ») : lignes « Tri persistant » (`SortName` verrouillé sur l'item réel, effacé sinon par
+  `AfterMetadataRefresh`) et « Récupérateur d'images embarqué » (`Supports` vrai pour un livre sans chemin ; activation manuelle de
+  « BookMeta Embedded Cover »). Les §2 et §4 sont inchangés. Aucun BREAKING.
 
 ## [20261031] — v0.1.0 : écarts décidés à la revue LOT-2
 

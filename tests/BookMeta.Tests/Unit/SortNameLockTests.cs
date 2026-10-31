@@ -91,4 +91,25 @@ public sealed class SortNameLockTests : IDisposable
         Assert.True(result.HasMetadata);
         Assert.False(log.HasWarning);
     }
+
+    [Fact]
+    public void Provider_JournaliseEnDebug_LeVerrouEtSesRefus()
+    {
+        var dir = _fs.Dir("Stephenie Meyer", "Tentation", 2006);
+        BookFolder.PlaceSidecar(dir, "tentation-bindery.opf");
+        var real = new Book { Path = BookFolder.Touch(dir, "Tentation.epub"), Name = "Tentation", InternalId = 42 };
+        string Run(Func<long, BaseItem?> lookup)
+        {
+            var log = new RecordingLogger();
+            new BookMeta.Providers.BookMetadataProvider(log.Manager, RealFs.FileSystem()) { ItemLookup = lookup }
+                .GetMetadata(new ItemInfo(real), new MediaBrowser.Model.Configuration.LibraryOptions(), RealFs.DirectoryService(), CancellationToken.None)
+                .GetAwaiter().GetResult();
+            return string.Join("\n", log.Entries.Where(e => e.Level == "Debug").Select(e => e.Message));
+        }
+
+        Assert.Contains("tri verrouillé pour", Run(_ => real));
+        Assert.Contains("Meyer, Stephenie - Tentation", Run(_ => real));
+        Assert.Contains("introuvable", Run(_ => null));
+        Assert.Contains("pas un livre", Run(_ => new MediaBrowser.Controller.Entities.Audio.Audio()));
+    }
 }

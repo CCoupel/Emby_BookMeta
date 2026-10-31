@@ -61,8 +61,29 @@ public class BookMetadataProvider : ILocalMetadataProvider<Book>, IHasItemChange
     {
         try
         {
-            if (info.Id == 0 || string.IsNullOrWhiteSpace(book.SortName)) return;
-            if (ItemLookup(info.Id) is Book real) SortNameLock.Apply(real, book.SortName);
+            if (info.Id == 0)
+            {
+                _logger.Debug("BookMeta : tri non verrouillé pour {0} (identifiant d'item nul)", info.Path ?? "?");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(book.SortName))
+            {
+                _logger.Debug("BookMeta : tri non verrouillé pour {0} (tri vide)", info.Path ?? "?");
+                return;
+            }
+            var found = ItemLookup(info.Id);
+            if (found == null)
+            {
+                _logger.Debug("BookMeta : tri non verrouillé pour {0} (item {1} introuvable)", info.Path ?? "?", info.Id);
+                return;
+            }
+            if (found is not Book real)
+            {
+                _logger.Debug("BookMeta : tri non verrouillé pour {0} (item {1} de type {2}, pas un livre)", info.Path ?? "?", info.Id, found.GetType().Name);
+                return;
+            }
+            SortNameLock.Apply(real, book.SortName);
+            _logger.Debug("BookMeta : tri verrouillé pour {0} : {1}", info.Path ?? "?", book.SortName);
         }
         catch (Exception ex)
         {
