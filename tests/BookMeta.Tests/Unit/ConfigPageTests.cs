@@ -57,4 +57,19 @@ public class ConfigPageTests
         foreach (var p in pages)
             Assert.NotNull(typeof(Plugin).Assembly.GetManifestResourceStream(p.EmbeddedResourcePath));
     }
+
+    [Fact]
+    public void Enregistrer_EstDesactiveTantQueLaConfigurationNEstPasLue()
+    {
+        var html = Resource("configPage.html");
+        Assert.Matches("id=\"BtnSave\"[^>]*\\bdisabled\\b", html);
+
+        var js = Resource("configScript.js");
+        Assert.Contains("var loaded = false", js);
+        Assert.Contains("if (!loaded) { return; }", js);   // garde dans save()
+        Assert.Contains("loaded = true", js);               // posé seulement dans le succès de la lecture
+        Assert.Contains("Impossible de lire la configuration", js);
+        // la lecture réussie est la seule à réactiver le bouton
+        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(js, @"setSaveEnabled\(true\)").Count);
+    }
 }

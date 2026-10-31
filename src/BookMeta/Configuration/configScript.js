@@ -12,6 +12,13 @@ define([], function () {
         }
 
         var savedTimer = null;
+        // Enregistrer n'est possible qu'une fois la configuration lue : sinon la case (décochée par défaut dans le HTML) écraserait la valeur du serveur.
+        var loaded = false;
+
+        function setSaveEnabled(enabled) {
+            var btn = view.querySelector('#BtnSave');
+            if (btn) { btn.disabled = !enabled; }
+        }
 
         // Retour visible en plus du toast Emby standard (qui peut passer inaperçu).
         function showSaved() {
@@ -24,12 +31,18 @@ define([], function () {
             ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (cfg) {
                 // Absent (ancienne configuration) : le défaut du plugin est « activé ».
                 view.querySelector('#EnableEpubCoverExtraction').checked = cfg.EnableEpubCoverExtraction !== false;
+                loaded = true;
+                setSaveEnabled(true);
+                setStatus('');
             }, function () {
-                setStatus('Impossible de lire la configuration.');
+                loaded = false;
+                setSaveEnabled(false);
+                setStatus('Impossible de lire la configuration : rechargez la page.');
             });
         }
 
         function save() {
+            if (!loaded) { return; }
             setStatus('');
             // On repart de la configuration actuelle du serveur (relue maintenant) et on ne modifie que la case :
             // les autres champs (dont la liste des bibliothèques déjà activées, gérée par le plugin) sont renvoyés tels quels.
@@ -46,7 +59,12 @@ define([], function () {
             });
         }
 
+        setSaveEnabled(false);
         view.querySelector('#BtnSave').addEventListener('click', save);
-        view.addEventListener('viewshow', load);
+        view.addEventListener('viewshow', function () {
+            loaded = false;
+            setSaveEnabled(false);
+            load();
+        });
     };
 });
