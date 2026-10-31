@@ -71,9 +71,10 @@ namespace BookMeta.Tests.Support
             new global::BookMeta.Providers.BookCoverFileProvider(log.Manager).Name;
 
         /// <summary>Renvoie la réponse du fournisseur d'image embarquée (null accepté = « pas d'image »).</summary>
-        public static DynamicImageResponse? GetEmbeddedCover(string bookPath, RecordingLogger log)
+        public static DynamicImageResponse? GetEmbeddedCover(string bookPath, RecordingLogger log, bool? epubEnabled = null)
         {
             var provider = new global::BookMeta.Providers.BookEmbeddedCoverProvider(log.Manager, RealFs.FileSystem());
+            if (epubEnabled.HasValue) provider.EpubExtractionEnabled = () => epubEnabled.Value;
             var result = new MetadataResult<BookEntity> { Item = NewBook(bookPath) };
             return provider.GetImage(result, ImageType.Primary, CancellationToken.None).GetAwaiter().GetResult();
         }
@@ -86,8 +87,20 @@ namespace BookMeta.Tests.Support
             return provider.GetImage(result, ImageType.Primary, CancellationToken.None).GetAwaiter().GetResult();
         }
 
-        public static bool SupportsEmbeddedCover(BaseItem item, RecordingLogger log) =>
-            new global::BookMeta.Providers.BookEmbeddedCoverProvider(log.Manager, RealFs.FileSystem()).Supports(item);
+        public static bool SupportsEmbeddedCover(BaseItem item, RecordingLogger log, bool? epubEnabled = null)
+        {
+            var provider = new global::BookMeta.Providers.BookEmbeddedCoverProvider(log.Manager, RealFs.FileSystem());
+            if (epubEnabled.HasValue) provider.EpubExtractionEnabled = () => epubEnabled.Value;
+            return provider.Supports(item);
+        }
+
+        /// <summary>Item factice sans Path (utilisé par Emby pour lister les fetchers) : GetImage doit répondre vide.</summary>
+        public static DynamicImageResponse? GetEmbeddedCoverPathless(RecordingLogger log)
+        {
+            var provider = new global::BookMeta.Providers.BookEmbeddedCoverProvider(log.Manager, RealFs.FileSystem());
+            return provider.GetImage(new MetadataResult<BookEntity> { Item = new BookEntity() }, ImageType.Primary, CancellationToken.None)
+                .GetAwaiter().GetResult();
+        }
 
         public static string EmbeddedCoverProviderName(RecordingLogger log) =>
             new global::BookMeta.Providers.BookEmbeddedCoverProvider(log.Manager, RealFs.FileSystem()).Name;
@@ -106,12 +119,22 @@ namespace BookMeta.Tests.Support
         public static List<LocalImageInfo> GetFolderCovers(string bookPath, RecordingLogger log) => throw NotWired();
         public static bool SupportsFolderCovers(BaseItem item, RecordingLogger log) => throw NotWired();
         public static string FolderCoverProviderName(RecordingLogger log) => throw NotWired();
-        public static DynamicImageResponse? GetEmbeddedCover(string bookPath, RecordingLogger log) => throw NotWired();
+        public static DynamicImageResponse? GetEmbeddedCover(string bookPath, RecordingLogger log, bool? epubEnabled = null) => throw NotWired();
+        public static DynamicImageResponse? GetEmbeddedCoverPathless(RecordingLogger log) => throw NotWired();
         public static DynamicImageResponse? GetEmbeddedCoverFromBaseItemOnly(string bookPath, RecordingLogger log) => throw NotWired();
-        public static bool SupportsEmbeddedCover(BaseItem item, RecordingLogger log) => throw NotWired();
+        public static bool SupportsEmbeddedCover(BaseItem item, RecordingLogger log, bool? epubEnabled = null) => throw NotWired();
         public static string EmbeddedCoverProviderName(RecordingLogger log) => throw NotWired();
         public static ImageType[] EmbeddedSupportedImages(string bookPath, RecordingLogger log) => throw NotWired();
 #endif
+
+        /// <summary>Tri effectif d'un livre : ForcedSortName (membre non public, par réflexion) s'il existe et est renseigné, sinon SortName.</summary>
+        public static string? EffectiveSortName(BaseItem item)
+        {
+            var p = typeof(BaseItem).GetProperty("ForcedSortName",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            var forced = p?.GetValue(item) as string;
+            return string.IsNullOrEmpty(forced) ? item.SortName : forced;
+        }
 
         /// <summary>Vrai si la réponse porte une image (Stream ou Path) ; « pas d'image » = null, ou Stream et Path vides.</summary>
         public static bool HasImage(DynamicImageResponse? r) => r != null && (r.Stream != null || !string.IsNullOrEmpty(r.Path));

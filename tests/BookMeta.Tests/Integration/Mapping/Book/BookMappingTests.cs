@@ -94,6 +94,48 @@ namespace BookMeta.Tests.Integration.Mapping.Book
             Assert.Equal("Dupont, Jean - Mon Titre", r.Item.SortName);
         }
 
+        // ---------- Régression recette emby2 D1 : le tri doit être porté par l'item après mapping ----------
+        // Constat : SortName = titre seul sur les 17 items. Le tri composé doit survivre à la fusion Emby :
+        // « Tri effectif » = SpecApi.EffectiveSortName : ForcedSortName si l'item en porte un (membre non public du SDK 4.10.2,
+        // lu par réflexion), sinon SortName. À aligner sur le mécanisme retenu par dev-plugin (SDK_NOTES).
+        // Limite : la fusion MetadataService n'est pas reproductible hors serveur → vérification finale = recette emby2.
+
+        [SpecFact]
+        public void D1_Tentation_le_tri_effectif_porte_le_tri_compose()
+        {
+            var r = MapFixture("tentation-bindery.opf");
+
+            Assert.Equal("Meyer, Stephenie - Tentation", SpecApi.EffectiveSortName(r.Item));
+            Assert.Equal("Meyer, Stephenie - Tentation", r.Item.SortName);
+        }
+
+        [SpecFact]
+        public void D1_Serie_le_tri_effectif_porte_auteur_serie_index_titre()
+        {
+            var r = MapFixture("series.opf");
+
+            Assert.Equal("Meyer, Stephenie - Twilight 02 - Tentation", SpecApi.EffectiveSortName(r.Item));
+        }
+
+        [SpecFact]
+        public void D1_Titre_a_article_le_tri_compose_n_est_pas_le_titre_seul()
+        {
+            // « La psy » / « psy » : le tri Emby par défaut retire l'article ; le tri BookMeta commence par l'auteur.
+            var r = MapXml(Opf2("<dc:title>La psy</dc:title><meta name=\"calibre:title_sort\" content=\"psy (La)\"/>" +
+                "<dc:creator opf:role=\"aut\" opf:file-as=\"McFadden, Freida\">Freida McFadden</dc:creator>"));
+
+            Assert.StartsWith("McFadden, Freida - ", SpecApi.EffectiveSortName(r.Item));
+            Assert.StartsWith("McFadden, Freida - ", r.Item.SortName);
+        }
+
+        [SpecFact]
+        public void D1_Sans_auteur_le_tri_effectif_vaut_le_titre_de_tri()
+        {
+            var r = MapXml(Opf2("<dc:title>Le Titre</dc:title><meta name=\"calibre:title_sort\" content=\"Titre, Le\"/>"));
+
+            Assert.Equal("Titre, Le", SpecApi.EffectiveSortName(r.Item));
+        }
+
         // ---------- Série (GATE 2 Q2) ----------
 
         [SpecFact]

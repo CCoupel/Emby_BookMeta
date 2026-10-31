@@ -138,11 +138,19 @@ namespace BookMeta.Tests.Integration.Covers.Cbz
         }
 
         [SpecFact]
-        public void Supports_cbz_oui_cbr_pdf_non()
+        public void Supports_cbz_oui()
         {
             Assert.True(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = "/ceph/books/D/F (2026)/F.cbz" }, _log));
-            Assert.False(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = "/ceph/books/D/F (2026)/F.cbr" }, _log));
-            Assert.False(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = "/ceph/books/D/F (2026)/F.pdf" }, _log));
+            // Recette D2 : cbr / pdf ne sont plus filtrés par Supports (item factice sans Path) mais par GetImage (réponse vide).
+        }
+
+        [SpecFact]
+        public void Le_cbr_n_a_pas_de_couverture_embarquee()
+        {
+            var dir = _fs.Dir("Darko Macan", "Frankenwood", 2026);
+            var cbr = BookFolder.Touch(dir, "Frankenwood.cbr", Img.Jpg("x"));
+
+            Assert.False(SpecApi.HasImage(SpecApi.GetEmbeddedCover(cbr, _log)));
         }
 
         [SpecFact]

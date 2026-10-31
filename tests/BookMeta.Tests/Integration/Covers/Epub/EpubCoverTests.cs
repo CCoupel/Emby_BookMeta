@@ -171,10 +171,11 @@ namespace BookMeta.Tests.Integration.Covers.Epub
         }
 
         [SpecFact]
-        public void Supports_epub_oui_pdf_non_et_nom_stable()
+        public void Supports_epub_oui_et_nom_stable()
         {
             Assert.True(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = "/ceph/books/A/L (2020)/L.epub" }, _log));
-            Assert.False(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = "/ceph/books/A/L (2020)/L.pdf" }, _log));
+            // Recette D2 : Supports ne filtre plus sur le chemin (Emby l'appelle avec un item factice sans Path) ;
+            // l'extension est vérifiée dans GetImage (cf. EmbeddedCoverDiscoveryTests).
             Assert.Equal("BookMeta Embedded Cover", SpecApi.EmbeddedCoverProviderName(_log));
         }
 
