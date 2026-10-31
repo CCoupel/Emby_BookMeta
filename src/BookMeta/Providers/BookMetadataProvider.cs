@@ -17,12 +17,6 @@ public class BookMetadataProvider : ILocalMetadataProvider<Book>, IHasItemChange
         _logger = logManager.GetLogger("BookMeta");
     }
 
-    /// <summary>
-    /// Sans effet depuis le cycle 4 (le tri est verrouillé par <see cref="BookSortNameProvider"/>, sur l'instance rafraîchie).
-    /// Conservé uniquement pour que <c>tests/Support/SpecApi.cs</c> (test-writer) continue de compiler ; à supprimer avec lui.
-    /// </summary>
-    internal Func<long, BaseItem?>? ItemLookup { get; set; }
-
     /// <summary>Clé affichée (et stockée) dans les réglages de bibliothèque : ne jamais changer.</summary>
     public string Name => "BookMeta";
 

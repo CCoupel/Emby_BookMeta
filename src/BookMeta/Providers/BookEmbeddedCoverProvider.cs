@@ -21,7 +21,9 @@ public class BookEmbeddedCoverProvider : IDynamicImageProvider
     internal Func<bool> EpubExtractionEnabled { get; set; } = () => Plugin.Instance?.Configuration.EnableEpubCoverExtraction ?? true;
 
     /// <summary>Clé des réglages de bibliothèque : ne jamais changer.</summary>
-    public string Name => "BookMeta Embedded Cover";
+    public string Name => ProviderName;
+
+    public const string ProviderName = "BookMeta Embedded Cover";
 
     public bool Supports(BaseItem item)
     {

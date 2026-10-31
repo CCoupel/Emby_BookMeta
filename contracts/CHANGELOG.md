@@ -2,6 +2,11 @@
 
 > Changements de contrats (API, schemas) : `BREAKING` | `CHANGED` | `ADDED`. Lu par le CDP au GATE 2.
 
+## [20261031-d] — v0.1.0 : activation automatique du récupérateur de couvertures
+
+- **[ADDED]** `contracts/models.md` §5 (configuration) : `PluginConfiguration.AutoEnabledLibraryIds` (liste d'identifiants de bibliothèques, défaut vide) ;
+  §7 : activation automatique de « BookMeta Embedded Cover » sur les bibliothèques `books`, une seule fois par bibliothèque (décision utilisateur). Aucun BREAKING.
+
 ## [20261031-c] — v0.1.0 : recette emby2 0.1.0.3 (cycle 4)
 
 - **[CHANGED]** `contracts/models.md` §7 : tri verrouillé par un `ICustomMetadataProvider<Book>` forcé (« BookMeta Sort Name ») sur l'instance

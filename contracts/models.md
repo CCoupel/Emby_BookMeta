@@ -61,7 +61,7 @@ Seule `ImageType.Primary` est fournie (`GetSupportedImages`).
 
 ## 5. Configuration (issue #8)
 
-`PluginConfiguration : BasePluginConfiguration` — `bool EnableEpubCoverExtraction = true`. Persistance par Emby
+`PluginConfiguration : BasePluginConfiguration` — `bool EnableEpubCoverExtraction = true` ; `List<string> AutoEnabledLibraryIds` (défaut vide : bibliothèques de livres déjà traitées par l'activation automatique du récupérateur de couvertures, voir §7). Persistance par Emby
 (`BasePlugin<T>.Configuration`, XML dans `/config/plugins/configurations/BookMeta.xml`). Page : fragment HTML +
 module AMD, lecture/écriture via `ApiClient.getPluginConfiguration(PLUGIN_ID)` / `updatePluginConfiguration` —
 API standard d'Emby, aucun endpoint propre au plugin.
@@ -95,4 +95,5 @@ Précisions apportées à l'implémentation, jugées justifiées par la revue ; 
 | Description | Plafonnée à 64 Ko avant nettoyage ; nettoyage borné par un délai (1 s), repli linéaire + `Warn` |
 | Tailles | OPF et `container.xml` ≤ 5 Mo ; image de couverture ≤ 32 Mo |
 | Tri persistant | Le `SortName` calculé est posé sur **l'instance rafraîchie** par un `ICustomMetadataProvider<Book>` forcé (`BookMeta Sort Name`, exécuté avant `AfterMetadataRefresh`) **et le champ `SortName` est verrouillé** (Emby le réinitialise sinon à chaque actualisation) ; un tri saisi à la main est réécrit au refresh suivant |
+| Activation du récupérateur de couvertures (décision utilisateur) | Au démarrage du serveur, « BookMeta Embedded Cover » est ajouté à `TypeOptions[Book].ImageFetchers`/`ImageFetcherOrder` de chaque bibliothèque `books`, **une seule fois par bibliothèque** (`PluginConfiguration.AutoEnabledLibraryIds`) ; une case décochée ensuite n'est pas recochée ; aucune autre option modifiée, aucun refresh déclenché |
 | Récupérateur d'images embarqué | `Supports` vrai pour un livre sans chemin ou dont le chemin n'a pas d'extension (livre factice `…/dummy` de la liste des réglages) ; l'utilisateur doit cocher « BookMeta Embedded Cover » dans la bibliothèque |
