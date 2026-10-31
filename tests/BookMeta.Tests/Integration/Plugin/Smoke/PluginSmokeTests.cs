@@ -68,6 +68,22 @@ namespace BookMeta.Tests.Integration.Plugin.Smoke
             Assert.Equal("BookMeta", name);
         }
 
+        /// <summary>Version du csproj complétée à 4 champs (champ absent = 0) : X.Y.Z (prod) et X.Y.Z.a (dev) donnent la version d'assembly.</summary>
+        private static Version NormalizeVersion(string csprojVersion)
+        {
+            var v = Version.Parse(csprojVersion);
+            return new Version(v.Major, v.Minor, Math.Max(v.Build, 0), Math.Max(v.Revision, 0));
+        }
+
+        [Theory]
+        [InlineData("0.1.0", "0.1.0.0")]
+        [InlineData("0.1.0.4", "0.1.0.4")]
+        [InlineData("1.2", "1.2.0.0")]
+        public void La_normalisation_de_version_accepte_les_formes_prod_et_dev(string csproj, string expected)
+        {
+            Assert.Equal(Version.Parse(expected), NormalizeVersion(csproj));
+        }
+
         [Fact]
         public void Version_assembly_egale_celle_du_csproj()
         {
@@ -75,7 +91,7 @@ namespace BookMeta.Tests.Integration.Plugin.Smoke
             var csprojVersion = doc.Descendants("Version").Select(e => e.Value.Trim()).FirstOrDefault();
             Assert.False(string.IsNullOrEmpty(csprojVersion), "<Version> absente de BookMeta.csproj");
 
-            Assert.Equal(Version.Parse(csprojVersion!), PluginType.Assembly.GetName().Version);
+            Assert.Equal(NormalizeVersion(csprojVersion!), PluginType.Assembly.GetName().Version);
         }
 
         [Fact]
