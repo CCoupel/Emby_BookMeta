@@ -5,11 +5,43 @@
 
   <div class="scrollSlider flex-grow flex-direction-column padded-left padded-left-page padded-right padded-top-page padded-bottom-page">
     <div id="BookMetaConfigPage">
+
       <div class="sectionTitleContainer flex align-items-center">
         <h2 class="sectionTitle">BookMeta</h2>
       </div>
-      <!-- Coquille : le réglage est ajouté en LOT-3 (#8). -->
-      <p>Métadonnées et couvertures des livres depuis les fichiers locaux.</p>
+
+      <div class="detailSection">
+        <div class="checkboxContainer checkboxContainer-withDescription">
+          <label>
+            <input type="checkbox" id="EnableEpubCoverExtraction" is="emby-checkbox" class="emby-checkbox" checked />
+            <span>Extraire la couverture depuis le fichier epub</span>
+          </label>
+          <div class="fieldDescription checkboxFieldDescription" id="EnableEpubCoverExtractionHelp">
+            Lorsqu'aucune image <code>cover.*</code> ou <code>folder.*</code> n'est présente dans le dossier du livre,
+            la couverture déclarée dans l'epub (OPF 2 <code>meta cover</code>, OPF 3 <code>cover-image</code>, sinon première image) est utilisée.
+            Désactivé, seuls les fichiers image du dossier et les archives <code>.cbz</code> fournissent une couverture.
+            Les métadonnées (titre, auteur, résumé…) ne sont pas concernées. Activé par défaut.
+          </div>
+        </div>
+
+        <div class="fieldDescription" id="EmbeddedCoverNote" style="margin-top:1em">
+          Les couvertures extraites des epub et des cbz passent par le récupérateur d'images <b>BookMeta Embedded Cover</b>.
+          Il est activé automatiquement, une seule fois, sur les bibliothèques de livres ; vous pouvez le désactiver à tout moment dans
+          Médiathèque → Livres → Récupérateurs d'images.
+        </div>
+      </div>
+
+      <div style="margin-top:1.5em">
+        <button id="BtnSave" is="emby-button" class="raised button-submit emby-button" type="button">
+          <span>Enregistrer</span>
+        </button>
+        <span id="SaveStatus" style="margin-left:1em;font-size:0.9em"></span>
+      </div>
+
+      <div class="fieldDescription" id="RefreshNote" style="margin-top:1.5em">
+        Après modification : « Actualiser les métadonnées » de la bibliothèque Livres (images) pour appliquer le changement aux livres existants.
+      </div>
+
     </div>
   </div>
 </div>
