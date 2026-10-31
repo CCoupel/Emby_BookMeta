@@ -26,6 +26,24 @@ namespace BookMeta.Tests.Integration.Covers.Epub
             Assert.True(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = "" }, _log));
         }
 
+        [SpecTheory]
+        [InlineData("/config/metadata/dummy")]
+        [InlineData("dummy")]
+        [InlineData("/var/lib/emby/metadata/dummy")]
+        public void D2_bis_Embedded_Supports_vrai_pour_le_livre_factice_dont_le_Path_est_dummy_sans_extension(string path)
+        {
+            // Emby (ProviderManager.GetPluginSummary) liste les fetchers avec un Book dont le chemin se termine par « dummy ».
+            Assert.True(SpecApi.SupportsEmbeddedCover(new BookEntity { Path = path }, _log));
+        }
+
+        [SpecTheory]
+        [InlineData("/config/metadata/dummy")]
+        [InlineData("dummy")]
+        public void D2_bis_GetImage_sur_le_livre_factice_dummy_repond_vide(string path)
+        {
+            Assert.False(SpecApi.HasImage(SpecApi.GetEmbeddedCover(path, _log)));
+        }
+
         [SpecFact]
         public void Embedded_Supports_faux_pour_un_item_qui_n_est_pas_un_Book()
         {

@@ -1,4 +1,5 @@
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -38,17 +39,24 @@ namespace BookMeta.Tests.Support
             return new BookEntity { Path = bookPath, Name = System.IO.Path.GetFileNameWithoutExtension(bookPath) };
         }
 
-        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log,
-            Func<long, BaseItem?>? itemLookup = null, long itemId = 0)
+        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log)
         {
             // ASSUMPTION : ctor (ILogManager, IFileSystem) — cf. SDK_NOTES « injection par constructeur ».
             var provider = new global::BookMeta.Providers.BookMetadataProvider(log.Manager, RealFs.FileSystem());
-            // Recette D1 : l'item réel est retrouvé par ItemInfo.Id via BaseItem.LibraryManager (seam interne ItemLookup).
-            if (itemLookup != null) provider.ItemLookup = itemLookup;
-            var book = NewBook(bookPath);
-            book.InternalId = itemId;
-            var info = new ItemInfo(book);
+            var info = new ItemInfo(NewBook(bookPath));
             return provider.GetMetadata(info, new LibraryOptions(), RealFs.DirectoryService(), CancellationToken.None)
+                .GetAwaiter().GetResult();
+        }
+
+        /// <summary>Livre « réel » (Path renseigné) tel que l'instance rafraîchie qu'Emby passe aux fournisseurs custom.</summary>
+        public static BookEntity NewBookItem(string bookPath) => NewBook(bookPath);
+
+        /// <summary>Cycle 4 : BookSortNameProvider.FetchAsync (ICustomMetadataProvider, instance rafraîchie).</summary>
+        public static ItemUpdateType FetchSortName(BookEntity? item, RecordingLogger log)
+        {
+            var provider = new global::BookMeta.Providers.BookSortNameProvider(log.Manager);
+            var result = new MetadataResult<BookEntity> { Item = item! };
+            return provider.FetchAsync(result, new MetadataRefreshOptions(RealFs.DirectoryService()), new LibraryOptions(), CancellationToken.None)
                 .GetAwaiter().GetResult();
         }
 
@@ -118,8 +126,9 @@ namespace BookMeta.Tests.Support
 
         private static Exception NotWired() => new NotImplementedException("SpecApi non branché : dotnet test -p:Lot2Specs=true");
 
-        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log,
-            Func<long, BaseItem?>? itemLookup = null, long itemId = 0) => throw NotWired();
+        public static MetadataResult<BookEntity> GetMetadata(string bookPath, RecordingLogger log) => throw NotWired();
+        public static BookEntity NewBookItem(string bookPath) => throw NotWired();
+        public static ItemUpdateType FetchSortName(BookEntity? item, RecordingLogger log) => throw NotWired();
         public static bool HasChanged(string bookPath, DateTime dateLastRefreshedUtc, RecordingLogger log) => throw NotWired();
         public static string MetadataProviderName(RecordingLogger log) => throw NotWired();
         public static List<LocalImageInfo> GetFolderCovers(string bookPath, RecordingLogger log) => throw NotWired();
