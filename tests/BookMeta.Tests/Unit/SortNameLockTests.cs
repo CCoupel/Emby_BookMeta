@@ -1,7 +1,9 @@
 using BookMeta.Providers;
 using BookMeta.Tests.Support;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
 using Xunit;
@@ -53,63 +55,66 @@ public sealed class SortNameLockTests : IDisposable
         Assert.True(b.LockedFields == null || b.LockedFields.Length == 0);
     }
 
-    [Fact]
-    public void Provider_VerrouilleLeTriDeLItemReel()
+    private const string TentationSort = "Meyer, Stephenie - Tentation";
+
+    private (BookSortNameProvider Provider, RecordingLogger Log, Book Item) Setup(string fixture = "tentation-bindery.opf", string file = "Tentation.epub")
     {
         var log = new RecordingLogger();
         var dir = _fs.Dir("Stephenie Meyer", "Tentation", 2006);
-        BookFolder.PlaceSidecar(dir, "tentation-bindery.opf");
-        var path = BookFolder.Touch(dir, "Tentation.epub");
+        BookFolder.PlaceSidecar(dir, fixture);
+        var item = new Book { Path = BookFolder.Touch(dir, file), Name = "Tentation", InternalId = 42 };
+        return (new BookSortNameProvider(log.Manager), log, item);
+    }
 
-        var real = new Book { Path = path, Name = "Tentation", InternalId = 42 };
+    private static ItemUpdateType Fetch(BookSortNameProvider p, Book item) =>
+        p.FetchAsync(new MetadataResult<Book> { Item = item }, new MetadataRefreshOptions(RealFs.DirectoryService()), new LibraryOptions(), CancellationToken.None)
+            .GetAwaiter().GetResult();
 
-        var provider = new BookMeta.Providers.BookMetadataProvider(log.Manager, RealFs.FileSystem())
-        {
-            ItemLookup = id => id == 42 ? real : null,
-        };
-        var result = provider.GetMetadata(new ItemInfo(real), new MediaBrowser.Model.Configuration.LibraryOptions(),
-            RealFs.DirectoryService(), CancellationToken.None).GetAwaiter().GetResult();
+    [Fact]
+    public void CustomProvider_VerrouilleLeTriDeLInstanceRafraichie_QuiSurvitAAfterMetadataRefresh()
+    {
+        var (provider, log, item) = Setup();
 
-        Assert.True(result.HasMetadata);
-        Assert.Equal("Meyer, Stephenie - Tentation", real.SortName);
-        real.AfterMetadataRefresh();
-        Assert.Equal("Meyer, Stephenie - Tentation", real.SortName);
+        Assert.Equal(ItemUpdateType.MetadataEdit, Fetch(provider, item));
+        item.AfterMetadataRefresh(); // ce qu'Emby fait ensuite : ne doit plus effacer le tri
+
+        Assert.Equal(TentationSort, item.SortName);
+        Assert.Contains(MetadataFields.SortName, item.LockedFields);
+        Assert.Contains(log.Entries, e => e.Level == "Debug" && e.Message.Contains("tri verrouillé") && e.Message.Contains(TentationSort) && e.Message.Contains("instance"));
         Assert.False(log.HasWarning);
     }
 
     [Fact]
-    public void Provider_ItemReelIntrouvable_NeLeveRien()
+    public void CustomProvider_DeuxiemeActualisation_NeModifieRien()
+    {
+        var (provider, _, item) = Setup();
+        Fetch(provider, item);
+        Assert.Equal(ItemUpdateType.None, Fetch(provider, item));
+    }
+
+    [Fact]
+    public void CustomProvider_SansOpf_NeToucheRien()
     {
         var log = new RecordingLogger();
-        var dir = _fs.Dir("Stephenie Meyer", "Tentation", 2006);
-        BookFolder.PlaceSidecar(dir, "tentation-bindery.opf");
-        var real = new Book { Path = BookFolder.Touch(dir, "Tentation.epub"), Name = "Tentation", InternalId = 42 };
+        var dir = _fs.Dir("Auteur", "Sans opf", 2020);
+        var item = new Book { Path = BookFolder.Touch(dir, "livre.pdf"), Name = "x" };
+        Assert.Equal(ItemUpdateType.None, Fetch(new BookSortNameProvider(log.Manager), item));
+        Assert.True(item.LockedFields == null || item.LockedFields.Length == 0);
+    }
 
-        var provider = new BookMeta.Providers.BookMetadataProvider(log.Manager, RealFs.FileSystem()) { ItemLookup = _ => null };
-        var result = provider.GetMetadata(new ItemInfo(real), new MediaBrowser.Model.Configuration.LibraryOptions(),
-            RealFs.DirectoryService(), CancellationToken.None).GetAwaiter().GetResult();
-        Assert.True(result.HasMetadata);
+    [Fact]
+    public void CustomProvider_ItemSansChemin_NeLeveRien()
+    {
+        var log = new RecordingLogger();
+        Assert.Equal(ItemUpdateType.None, Fetch(new BookSortNameProvider(log.Manager), new Book()));
         Assert.False(log.HasWarning);
     }
 
     [Fact]
-    public void Provider_JournaliseEnDebug_LeVerrouEtSesRefus()
+    public void CustomProvider_EstUnProviderForce_AuNomStable()
     {
-        var dir = _fs.Dir("Stephenie Meyer", "Tentation", 2006);
-        BookFolder.PlaceSidecar(dir, "tentation-bindery.opf");
-        var real = new Book { Path = BookFolder.Touch(dir, "Tentation.epub"), Name = "Tentation", InternalId = 42 };
-        string Run(Func<long, BaseItem?> lookup)
-        {
-            var log = new RecordingLogger();
-            new BookMeta.Providers.BookMetadataProvider(log.Manager, RealFs.FileSystem()) { ItemLookup = lookup }
-                .GetMetadata(new ItemInfo(real), new MediaBrowser.Model.Configuration.LibraryOptions(), RealFs.DirectoryService(), CancellationToken.None)
-                .GetAwaiter().GetResult();
-            return string.Join("\n", log.Entries.Where(e => e.Level == "Debug").Select(e => e.Message));
-        }
-
-        Assert.Contains("tri verrouillé pour", Run(_ => real));
-        Assert.Contains("Meyer, Stephenie - Tentation", Run(_ => real));
-        Assert.Contains("introuvable", Run(_ => null));
-        Assert.Contains("pas un livre", Run(_ => new MediaBrowser.Controller.Entities.Audio.Audio()));
+        var p = new BookSortNameProvider(new RecordingLogger().Manager);
+        Assert.IsAssignableFrom<IForcedProvider>(p);
+        Assert.Equal("BookMeta Sort Name", p.Name);
     }
 }

@@ -2,6 +2,12 @@
 
 > Changements de contrats (API, schemas) : `BREAKING` | `CHANGED` | `ADDED`. Lu par le CDP au GATE 2.
 
+## [20261031-c] — v0.1.0 : recette emby2 0.1.0.3 (cycle 4)
+
+- **[CHANGED]** `contracts/models.md` §7 : tri verrouillé par un `ICustomMetadataProvider<Book>` forcé (« BookMeta Sort Name ») sur l'instance
+  rafraîchie (le verrou posé via `GetItemById` visait une autre instance) ; `Supports` du récupérateur d'images vrai aussi pour un chemin
+  sans extension (livre factice `…/dummy`). §2 et §4 inchangés. Aucun BREAKING.
+
 ## [20261031-b] — v0.1.0 : défauts de recette emby2 (cycle 3)
 
 - **[ADDED]** `contracts/models.md` §7 (« Écarts décidés ») : lignes « Tri persistant » (`SortName` verrouillé sur l'item réel, effacé sinon par

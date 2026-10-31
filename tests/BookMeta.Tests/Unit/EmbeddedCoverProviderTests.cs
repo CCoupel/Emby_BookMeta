@@ -50,4 +50,13 @@ public class EmbeddedCoverProviderTests
         Assert.False(provider.Supports(new Book { Path = "/x/a.epub" }));
         Assert.True(provider.Supports(new Book { Path = "/x/a.cbz" }));
     }
+
+    [Theory]
+    [InlineData("/config/metadata/dummy")]   // livre factice de ProviderManager.GetPluginSummary : chemin sans extension (défaut D2-bis)
+    [InlineData("C:\\emby\\metadata\\dummy")]
+    public void LivreFacticeDeLaListeDesReglages_ExtensionVide_EstSupporte(string path)
+    {
+        var provider = new BookEmbeddedCoverProvider(new RecordingLogger().Manager, RealFs.FileSystem());
+        Assert.True(provider.Supports(new Book { Path = path }));
+    }
 }

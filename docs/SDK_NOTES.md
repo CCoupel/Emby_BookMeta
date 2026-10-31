@@ -123,8 +123,7 @@ Contrat de mapping : `contracts/models.md`. Cadrage : `docs/CADRAGE.md`. Docs XM
   → le getter recalcule alors le tri depuis `Name` (`CreateSortName` : retire les articles « La/Le… » via `ILocalizationManager.TrimSortRemoveWords`, d'où `La psy` → `psy`).
   Constaté en recette : 17/17 livres avec le tri par défaut d'Emby.
 - `MetadataService.MergeData` ne copie pas `LockedFields` du résultat ; `CopyMetadataSettings` les copie de l'item réel vers l'item temporaire.
-- **Correctif** : `SortNameLock.Apply(item, sortName)` ajoute `MetadataFields.SortName` à `LockedFields` de l'**item réel** (retrouvé par `BaseItem.LibraryManager.GetItemById(info.Id)`) et lui pose `SortName`. `ResetSortName` ne l'efface alors plus.
-- **Limites assumées** : (1) un tri saisi à la main dans l'UI (qui verrouille aussi `SortName`) est réécrit à l'actualisation suivante ; (2) le verrou reste posé si BookMeta est désinstallé ; (3) si `ItemInfo.Id` ne désigne pas l'item réel pendant le refresh, le correctif est sans effet (rien n'est cassé, aucun Warn). **À re-vérifier sur emby2** : `SortName` / `ForcedSortName` après `FullRefresh`.
+- **Premier correctif (cycle 3, insuffisant)** : verrouiller l'item retrouvé par `BaseItem.LibraryManager.GetItemById(info.Id)`. Constaté en recette : l'item trouvé est une **autre instance** que celle rafraîchie et sauvegardée (`LockedFields` vide ensuite) → retiré. Voir §9.
 
 ### D2 — « BookMeta Embedded Cover » n'apparaît pas dans les récupérateurs d'images
 - La liste des récupérateurs d'une bibliothèque (`Libraries/AvailableOptions`) est construite avec un livre factice **sans `Path`** ; un `Supports(item)` qui exige un chemin masque le provider (constaté : `ImageFetchers = []`).
@@ -132,4 +131,20 @@ Contrat de mapping : `contracts/models.md`. Cadrage : `docs/CADRAGE.md`. Docs XM
 - **Activation** : `BaseItem.IsImageFetcherEnabled` exige que le nom soit dans `TypeOptions.ImageFetchers` de la bibliothèque ; `ProviderManager.IsImageFetcherEnabledByDefault` est une **liste figée de noms Emby** (« Embedded Images », « Screen Grabber »…) qui ne contient pas BookMeta.
   → après installation, l'utilisateur doit **cocher « BookMeta Embedded Cover »** dans Réglages de la bibliothèque → Récupérateurs d'images (à documenter au README et à la recette), ou l'ajouter via l'API (`LibraryOptions.TypeOptions[Book].ImageFetchers`).
 - `BookMeta Cover File` est un `ILocalImageFileProvider` (images locales) : il n'apparaît pas dans cette liste et n'a pas besoin d'être activé.
+
+## 9. D1 (cycle 4) — verrouiller le tri sur l'instance rafraîchie : `ICustomMetadataProvider<Book>`
+
+Chaîne d'exécution lue dans `Emby.Providers.Manager.MetadataService<,>` (IL 4.10.2) :
+`RefreshMetadata` → `BaseItem.BeforeMetadataRefresh` → `RefreshWithProviders` { `RunCustomProvider` des providers « pré-rafraîchissement » (`IPreRefreshProvider`) → lecteurs locaux (`GetItemsFromLocalProvider`, fusion `MergeData`) → providers distants (`ExecuteRemoteProviders`) → `RunCustomProvider` des providers « custom » restants, **en fin de chaîne** } → images → `MetadataService.AfterMetadataRefresh` (= `BaseItem.AfterMetadataRefresh` → `ResetSortName`) → `SaveItem` (`UpdateToRepository`).
+
+- `ICustomMetadataProvider<Book>.FetchAsync(MetadataResult<Book> itemResult, MetadataRefreshOptions, LibraryOptions, CancellationToken) → Task<ItemUpdateType>` reçoit `itemResult.Item` = l'instance rafraîchie, **avant** `AfterMetadataRefresh`. `ItemUpdateType` : `None = 1`, `MetadataImport = 2`, `ImageUpdate = 4`, `MetadataDownload = 8`, `MetadataEdit = 16`.
+- `IForcedProvider` (marqueur, comme `Emby.Providers.Books.BookProvider`) : le provider s'exécute sans être coché dans les réglages de la bibliothèque.
+- `BookSortNameProvider` (`Name = "BookMeta Sort Name"`) relit l'OPF (`OpfLocator`), recalcule le tri (`BookMapper.BuildSortName`) puis `SortNameLock.Apply(item, tri)` : ajoute `MetadataFields.SortName` aux `LockedFields` et pose `SortName`. Retourne `MetadataEdit` si l'état a changé, sinon `None`. Journalise en Debug le tri, `InternalId`, l'identité d'instance (`RuntimeHelpers.GetHashCode`) et l'état du verrou.
+- **À re-vérifier sur emby2** : `SortName` / `LockedFields` de l'item après `FullRefresh` (API), et le log Debug « tri verrouillé pour … (item #…, instance …) ». Si `LockedFields` reste vide : l'instance de `FetchAsync` n'est pas non plus celle sauvegardée ; repli = événement `ILibraryManager.ItemUpdated`.
+
+## 10. D2-bis — `BookMeta Embedded Cover` invisible dans les réglages
+
+`Libraries/AvailableOptions` → `ProviderManager.GetLibraryOptionsInfo` → `GetAllMetadataPlugins` → `GetPluginSummary<T>` : pour chaque type représentatif (`Book` pour le contenu « books ») il **instancie un item factice** (`Activator.CreateInstance<T>`), lui donne `Path = <InternalMetadataPath>/dummy` (**sans extension**), puis appelle `GetImageProviders(dummy, new LibraryOptions(), …, ignoreLibraryOptions)` et `AddImagePlugins` (providers `IRemoteImageProvider` et `IDynamicImageProvider`, via `GetSupportedImages(dummy)`).
+→ `Supports` doit être vrai pour un `Book` dont le chemin est vide **ou sans extension** (le cycle 3 ne couvrait que « sans chemin »). `BookEmbeddedCoverProvider.Supports` : chemin vide → vrai ; extension vide → vrai ; `.cbz` → vrai ; `.epub` → option ; autre → faux.
+- Case cochée par défaut : `LibraryOptionInfo.DefaultEnabled = ProviderManager.IsImageFetcherEnabledByDefault(nom, type, contenu)`, liste figée de noms Emby (§8). Pas de moyen côté provider ; **ne pas modifier la configuration des bibliothèques automatiquement**. À constater en recette : `DefaultEnabled` renvoyé par `AvailableOptions` pour « BookMeta Embedded Cover » (probablement `false` : l'utilisateur coche la case dans l'UI).
 
