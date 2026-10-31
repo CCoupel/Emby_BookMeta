@@ -13,16 +13,37 @@ public class BookLibraryActivatorTests
     {
         public List<BookLibrary> Libraries { get; } = new();
         public List<string> Saved { get; } = new();
+        public Dictionary<string, LibraryOptions> SavedOptions { get; } = new();
+        public TypeOptions? DefaultBook { get; set; } = new TypeOptions
+        {
+            Type = "Book", ImageFetchers = new[] { "Emby Defaut" }, ImageFetcherOrder = new[] { "Emby Defaut" }, MetadataFetchers = new[] { "MetaDefaut" },
+        };
         public Func<BookLibrary, bool> FailOn { get; set; } = _ => false;
         public bool FailListing { get; set; }
 
         public IReadOnlyList<BookLibrary> GetBookLibraries() =>
             FailListing ? throw new InvalidOperationException("liste indisponible") : Libraries;
 
+        public TypeOptions? GetDefaultBookTypeOptions() => DefaultBook;
+
+        public LibraryOptions Clone(LibraryOptions o) => new()
+        {
+            ContentType = o.ContentType,
+            TypeOptions = (o.TypeOptions ?? Array.Empty<TypeOptions>()).Select(t => new TypeOptions
+            {
+                Type = t.Type,
+                ImageFetchers = t.ImageFetchers?.ToArray()!,
+                ImageFetcherOrder = t.ImageFetcherOrder?.ToArray()!,
+                MetadataFetchers = t.MetadataFetchers?.ToArray()!,
+                MetadataFetcherOrder = t.MetadataFetcherOrder?.ToArray()!,
+            }).ToArray(),
+        };
+
         public void Save(BookLibrary library)
         {
             if (FailOn(library)) throw new IOException("disque plein");
             Saved.Add(library.Id);
+            SavedOptions[library.Id] = library.Options;
         }
     }
 
@@ -39,7 +60,7 @@ public class BookLibraryActivatorTests
     }
 
     [Fact]
-    public void SansEntreeBook_ElleEstCreeeEtLeFetcherAjoute()
+    public void SansEntreeBook_ElleReprendLesReglagesParDefautDEmby_PlusLeFetcher()
     {
         var store = new FakeStore();
         var lib = Lib("1", "Livres");
@@ -48,10 +69,12 @@ public class BookLibraryActivatorTests
         var r = Run(store);
 
         Assert.Equal(1, r.Count);
-        var book = Assert.Single(lib.Options.TypeOptions);
+        var book = Assert.Single(store.SavedOptions["1"].TypeOptions);
         Assert.Equal("Book", book.Type);
-        Assert.Equal(new[] { Fetcher }, book.ImageFetchers);
-        Assert.Equal(new[] { Fetcher }, book.ImageFetcherOrder);
+        Assert.Equal(new[] { "Emby Defaut", Fetcher }, book.ImageFetchers);
+        Assert.Equal(new[] { "Emby Defaut", Fetcher }, book.ImageFetcherOrder);
+        Assert.Equal(new[] { "MetaDefaut" }, book.MetadataFetchers);
+        Assert.Empty(lib.Options.TypeOptions); // l'instance du serveur n'a pas été modifiée en place
         Assert.Equal(new[] { "1" }, store.Saved);
         Assert.Equal(new[] { "1" }, r.Ids);
         Assert.Equal(1, r.Persisted);
@@ -62,10 +85,30 @@ public class BookLibraryActivatorTests
     public void OptionsAvecTypeOptionsNul_SontGerees()
     {
         var store = new FakeStore();
-        var lib = new BookLibrary("1", "Livres", new LibraryOptions { ContentType = "books", TypeOptions = null! });
-        store.Libraries.Add(lib);
+        store.Libraries.Add(new BookLibrary("1", "Livres", new LibraryOptions { ContentType = "books", TypeOptions = null! }));
         Assert.Equal(1, Run(store).Count);
-        Assert.Single(lib.Options.TypeOptions);
+        Assert.Single(store.SavedOptions["1"].TypeOptions);
+    }
+
+    [Fact]
+    public void ReglagesParDefautIndisponibles_AucuneEntreeVideN_EstCreee_InfoActivationManuelle()
+    {
+        var store = new FakeStore { DefaultBook = null };
+        store.Libraries.Add(Lib("1", "Livres"));
+
+        var r = Run(store);
+
+        Assert.Equal(0, r.Count);
+        Assert.Empty(store.Saved);
+        Assert.Empty(r.Ids);
+        Assert.Contains(r.Log.Entries, e => e.Level == "Info" && e.Message.Contains("à la main"));
+    }
+
+    [Fact]
+    public void ListeVide_TraceDebug()
+    {
+        var r = Run(new FakeStore());
+        Assert.Contains(r.Log.Entries, e => e.Level == "Debug" && e.Message.Contains("aucune bibliothèque de livres trouvée"));
     }
 
     [Fact]
@@ -79,11 +122,13 @@ public class BookLibraryActivatorTests
 
         Run(store);
 
-        var book = lib.Options.TypeOptions.Single(t => t.Type == "book");
+        var saved = store.SavedOptions["1"];
+        var book = saved.TypeOptions.Single(t => t.Type == "book");
         Assert.Equal(new[] { "Autre", Fetcher }, book.ImageFetchers);
         Assert.Equal(new[] { "Autre", Fetcher }, book.ImageFetcherOrder);
         Assert.Equal(new[] { "X" }, book.MetadataFetchers);
-        Assert.Equal(new[] { "TheMovieDb" }, lib.Options.TypeOptions.Single(t => t.Type == "Movie").ImageFetchers);
+        Assert.Equal(new[] { "TheMovieDb" }, saved.TypeOptions.Single(t => t.Type == "Movie").ImageFetchers);
+        Assert.Equal(new[] { "Autre" }, lib.Options.TypeOptions.Single(t => t.Type == "book").ImageFetchers); // original intact
     }
 
     [Fact]

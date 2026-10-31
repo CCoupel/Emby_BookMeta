@@ -117,4 +117,28 @@ public sealed class SortNameLockTests : IDisposable
         Assert.IsAssignableFrom<IForcedProvider>(p);
         Assert.Equal("BookMeta Sort Name", p.Name);
     }
+
+    [Fact]
+    public void CustomProvider_LecteurBookMetaDesactive_NeFaitRien()
+    {
+        var (provider, log, item) = Setup();
+        var disabled = new LibraryOptions { DisabledLocalMetadataReaders = new[] { "bookmeta" } };
+
+        var r = provider.FetchAsync(new MetadataResult<Book> { Item = item }, new MetadataRefreshOptions(RealFs.DirectoryService()), disabled, CancellationToken.None)
+            .GetAwaiter().GetResult();
+
+        Assert.Equal(ItemUpdateType.None, r);
+        Assert.True(item.LockedFields == null || item.LockedFields.Length == 0);
+        Assert.Contains(log.Entries, e => e.Level == "Debug" && e.Message.Contains("désactivé"));
+    }
+
+    [Fact]
+    public void CustomProvider_AutreLecteurDesactive_ContinueNormalement()
+    {
+        var (provider, _, item) = Setup();
+        var other = new LibraryOptions { DisabledLocalMetadataReaders = new[] { "Nfo" } };
+        var r = provider.FetchAsync(new MetadataResult<Book> { Item = item }, new MetadataRefreshOptions(RealFs.DirectoryService()), other, CancellationToken.None)
+            .GetAwaiter().GetResult();
+        Assert.Equal(ItemUpdateType.MetadataEdit, r);
+    }
 }

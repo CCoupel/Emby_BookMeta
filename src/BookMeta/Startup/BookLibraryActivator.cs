@@ -9,6 +9,12 @@ public interface IBookLibraryStore
     /// <summary>Bibliothèques dont le type de contenu est « books ».</summary>
     IReadOnlyList<BookLibrary> GetBookLibraries();
 
+    /// <summary>Options « Book » activées par défaut par Emby pour le contenu books (<c>IProviderManager.GetDefaultLibraryOptions</c>), ou <c>null</c> si indisponibles.</summary>
+    TypeOptions? GetDefaultBookTypeOptions();
+
+    /// <summary>Copie profonde des options (on ne modifie jamais l'instance en cache du serveur).</summary>
+    LibraryOptions Clone(LibraryOptions options);
+
     /// <summary>Enregistre les options (API serveur prévue pour les options de bibliothèque).</summary>
     void Save(BookLibrary library);
 }
@@ -30,13 +36,22 @@ public static class BookLibraryActivator
         var activated = 0;
         try
         {
-            foreach (var library in store.GetBookLibraries())
+            var libraries = store.GetBookLibraries();
+            if (libraries.Count == 0) logger.Debug("BookMeta : aucune bibliothèque de livres trouvée (médiathèque peut-être pas encore chargée)");
+            foreach (var library in libraries)
             {
                 try
                 {
                     if (processedIds.Contains(library.Id, StringComparer.OrdinalIgnoreCase)) continue;
 
-                    var typeOptions = FindOrCreateBookOptions(library.Options, out var created);
+                    // Copie de travail : l'instance du serveur n'est modifiée que par UpdateLibraryOptions.
+                    var work = store.Clone(library.Options);
+                    var typeOptions = FindOrCreateBookOptions(work, store, out var created);
+                    if (typeOptions == null)
+                    {
+                        logger.Info("BookMeta : bibliothèque {0} sans réglages « Livres » et réglages par défaut d'Emby indisponibles : activer « {1} » à la main (Réglages de la bibliothèque → Récupérateurs d'images)", library.Name, fetcherName);
+                        continue;
+                    }
                     var changed = created;
                     if (!typeOptions.ImageFetchers.Contains(fetcherName, StringComparer.OrdinalIgnoreCase))
                     {
@@ -51,7 +66,7 @@ public static class BookLibraryActivator
 
                     if (changed)
                     {
-                        store.Save(library);
+                        store.Save(library with { Options = work });
                         activated++;
                         logger.Info("BookMeta : récupérateur de couvertures activé pour la bibliothèque {0}", library.Name);
                     }
@@ -77,14 +92,28 @@ public static class BookLibraryActivator
         return activated;
     }
 
-    private static TypeOptions FindOrCreateBookOptions(LibraryOptions options, out bool created)
+    /// <summary>
+    /// Entrée « Book » existante ; sinon copie de celle des réglages par défaut d'Emby (jamais une entrée vide : elle désactiverait
+    /// les fournisseurs par défaut) ; <c>null</c> si ces réglages sont indisponibles.
+    /// </summary>
+    private static TypeOptions? FindOrCreateBookOptions(LibraryOptions options, IBookLibraryStore store, out bool created)
     {
         var list = (options.TypeOptions ?? Array.Empty<TypeOptions>()).ToList();
         var existing = list.FirstOrDefault(t => string.Equals(t.Type, BookType, StringComparison.OrdinalIgnoreCase));
         created = existing == null;
         if (existing == null)
         {
-            existing = new TypeOptions { Type = BookType };
+            var template = store.GetDefaultBookTypeOptions();
+            if (template == null) return null;
+            existing = new TypeOptions
+            {
+                Type = BookType,
+                MetadataFetchers = (template.MetadataFetchers ?? Array.Empty<string>()).ToArray(),
+                MetadataFetcherOrder = (template.MetadataFetcherOrder ?? Array.Empty<string>()).ToArray(),
+                ImageFetchers = (template.ImageFetchers ?? Array.Empty<string>()).ToArray(),
+                ImageFetcherOrder = (template.ImageFetcherOrder ?? Array.Empty<string>()).ToArray(),
+                ImageOptions = (template.ImageOptions ?? Array.Empty<ImageOption>()).ToArray(),
+            };
             list.Add(existing);
             options.TypeOptions = list.ToArray();
         }

@@ -29,6 +29,12 @@ public class BookSortNameProvider : ICustomMetadataProvider<Book>, IForcedProvid
         try
         {
             if (item == null || string.IsNullOrEmpty(item.Path)) return Task.FromResult(ItemUpdateType.None);
+            // Fournisseur forcé : il respecte quand même le choix de l'utilisateur de désactiver le lecteur « BookMeta » pour la bibliothèque.
+            if (libraryOptions?.DisabledLocalMetadataReaders?.Contains(BookMapper.ProviderName, StringComparer.OrdinalIgnoreCase) == true)
+            {
+                _logger.Debug("BookMeta : tri non verrouillé pour {0} (lecteur « {1} » désactivé dans la bibliothèque)", item.Path, BookMapper.ProviderName);
+                return Task.FromResult(ItemUpdateType.None);
+            }
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = OpfLocator.Locate(item.Path, null, null, _logger, cancellationToken);

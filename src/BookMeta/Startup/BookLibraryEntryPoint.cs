@@ -2,8 +2,10 @@ using BookMeta.Providers;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Plugins;
+using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Serialization;
 
 namespace BookMeta.Startup;
 
@@ -14,11 +16,15 @@ namespace BookMeta.Startup;
 public class BookLibraryEntryPoint : IServerEntryPoint
 {
     private readonly ILibraryManager _libraryManager;
+    private readonly IProviderManager _providerManager;
+    private readonly IJsonSerializer _json;
     private readonly ILogger _logger;
 
-    public BookLibraryEntryPoint(ILibraryManager libraryManager, ILogManager logManager)
+    public BookLibraryEntryPoint(ILibraryManager libraryManager, IProviderManager providerManager, IJsonSerializer json, ILogManager logManager)
     {
         _libraryManager = libraryManager;
+        _providerManager = providerManager;
+        _json = json;
         _logger = logManager.GetLogger("BookMeta");
     }
 
@@ -34,7 +40,7 @@ public class BookLibraryEntryPoint : IServerEntryPoint
             }
             var config = plugin.Configuration;
             config.AutoEnabledLibraryIds ??= new List<string>();
-            BookLibraryActivator.Run(new ServerStore(_libraryManager), BookEmbeddedCoverProvider.ProviderName,
+            BookLibraryActivator.Run(new ServerStore(_libraryManager, _providerManager, _json), BookEmbeddedCoverProvider.ProviderName,
                 config.AutoEnabledLibraryIds, () => plugin.SaveConfiguration(), _logger);
         }
         catch (Exception ex)
@@ -50,8 +56,23 @@ public class BookLibraryEntryPoint : IServerEntryPoint
     private sealed class ServerStore : IBookLibraryStore
     {
         private readonly ILibraryManager _manager;
+        private readonly IProviderManager _providers;
+        private readonly IJsonSerializer _json;
 
-        public ServerStore(ILibraryManager manager) => _manager = manager;
+        public ServerStore(ILibraryManager manager, IProviderManager providers, IJsonSerializer json)
+        {
+            _manager = manager;
+            _providers = providers;
+            _json = json;
+        }
+
+        public TypeOptions? GetDefaultBookTypeOptions() =>
+            _providers.GetDefaultLibraryOptions("books")?.TypeOptions?
+                .FirstOrDefault(t => string.Equals(t.Type, BookLibraryActivator.BookType, StringComparison.OrdinalIgnoreCase));
+
+        // Même aller-retour JSON que CollectionFolder.SaveLibraryOptions : LibraryOptions n'a pas de Clone.
+        public LibraryOptions Clone(LibraryOptions options) =>
+            _json.DeserializeFromString<LibraryOptions>(_json.SerializeToString(options));
 
         public IReadOnlyList<BookLibrary> GetBookLibraries() =>
             _manager.GetVirtualFolders()
